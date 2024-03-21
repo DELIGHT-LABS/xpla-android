@@ -1,5 +1,6 @@
 package io.delightlabs.xplaandroid
 
+import wallet.core.jni.HDWallet
 import android.util.Base64
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -32,6 +33,13 @@ class ExampleInstrumentedTest {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         assertEquals("io.delightlabs.xplaandroid", appContext.packageName)
+    }
+
+    @Test
+    fun lcdWallet(){
+        val seedPhrase = "table dinner sibling crisp hen genuine wing volume sport north omit cushion struggle script dinosaur merge medal visa also mixture faint surge boy wild"
+        val wallet = lcd.wallet(seedPhrase)
+        assertEquals("xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9", wallet.address)
     }
 
     @Test

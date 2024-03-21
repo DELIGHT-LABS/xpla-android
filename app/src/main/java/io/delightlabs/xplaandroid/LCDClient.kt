@@ -18,4 +18,9 @@ class LCDClient(
     val bankAPI: BankAPI = BankAPI(apiRequester)
     val wasmAPI: WasmAPI = WasmAPI(apiRequester)
 
+    fun wallet(mnemonic: String, passphrase: String = "") : LCDWallet {
+        System.loadLibrary("TrustWalletCore")
+        return LCDWallet(this, mnemonic, passphrase)
+    }
+
 }
