@@ -165,7 +165,7 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
         return any {
             val hex = "0a21"
             this.value = "${hex}${publicKey.data().toHexString()}".hexToByteArray().toByteString()
-            this.typeUrl = pubkeyProtoType
+            this.typeUrl = PubkeyProtoType
         }
     }
 }
