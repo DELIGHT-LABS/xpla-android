@@ -7,6 +7,7 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
 
+typealias APIParams = Map<String, kotlin.Any?>
 class BankAPI(private val retrofit: RetrofitConnection): BaseAPI(retrofit) {
 
     private val bank: Bank = retrofit.getInstance().create(Bank::class.java)

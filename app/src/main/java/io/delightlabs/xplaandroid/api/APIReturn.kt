@@ -59,8 +59,6 @@ class APIReturn {
         var type: String,
         var key: String
     )
-
-
     data class SmartQuery(
         var data: DataClass
     )
@@ -140,6 +138,7 @@ class APIReturn {
     )
 
     data class SimulateTx(
+        @SerializedName("gas_info")
         val gasInfo: GasInfo,
         val result: ResultClass
     )

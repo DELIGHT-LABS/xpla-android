@@ -1,12 +1,15 @@
 package io.delightlabs.xplaandroid.api
 
-import com.google.gson.annotations.SerializedName
 import retrofit2.Call
-import retrofit2.Response
-import retrofit2.create
 import retrofit2.http.GET
 import retrofit2.http.Path
-import retrofit2.http.Query
+
+interface Auth {
+    @GET("/cosmos/auth/v1beta1/accounts/{address}")
+    fun getUser(
+        @Path("address") address: String
+    ): Call<APIReturn.AccountReturn>
+}
 
 class AuthAPI(private val retrofit: RetrofitConnection): BaseAPI(retrofit) {
 
@@ -16,9 +19,3 @@ class AuthAPI(private val retrofit: RetrofitConnection): BaseAPI(retrofit) {
     }
 }
 
-interface Auth {
-    @GET("/cosmos/auth/v1beta1/accounts/{address}")
-    fun getUser(
-        @Path("address") address: String
-    ): Call<APIReturn.AccountReturn>
-}

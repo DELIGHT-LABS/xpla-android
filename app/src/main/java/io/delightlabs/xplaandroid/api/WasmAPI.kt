@@ -8,6 +8,13 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 import java.lang.Exception
 
+interface Wasm {
+    @GET("/cosmwasm/wasm/v1/contract/{contractAddr}/smart/{queryData}")
+    fun getTxData(
+        @Path("contractAddr") contractAddr: String,
+        @Path("queryData") queryData: String,
+    ): Call<APIReturn.SmartQuery>
+}
 
 class WasmAPI(private val retrofit: RetrofitConnection): BaseAPI(retrofit) {
 
@@ -21,10 +28,3 @@ class WasmAPI(private val retrofit: RetrofitConnection): BaseAPI(retrofit) {
     }
 }
 
-interface Wasm {
-    @GET("/cosmwasm/wasm/v1/contract/{contractAddr}/smart/{queryData}")
-    fun getTxData(
-        @Path("contractAddr") contractAddr: String,
-        @Path("queryData") queryData: String,
-    ): Call<APIReturn.SmartQuery>
-}

@@ -66,7 +66,6 @@ class SegwitAddrCoder {
     }
     fun encode2(hrp: String, program: ByteArray): String {
         val enc = convertBits(8, 5, true, program)
-        println("enc ${program.joinToString(separator = ",") { it.toString() }}")
         return bech32.encode(hrp, enc)
     }
 

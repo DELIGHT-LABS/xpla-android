@@ -1,10 +1,11 @@
 package io.delightlabs.xplaandroid.api
 
 import retrofit2.Call
-import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.lang.Exception
+import retrofit2.http.Body
+import retrofit2.http.POST
+
 
 interface Network {
     val url: String
@@ -24,16 +25,13 @@ enum class XplaNetwork: Network {
             get() = "dimension_37-1"
 
     }
-
 }
-
-typealias APIParams = Map<String, Any?>
 
 class RetrofitConnection(private val network: XplaNetwork) {
 
     private val url = network.url
-
     private var instance: Retrofit? = null
+
     fun getInstance(): Retrofit {
         if(instance == null) {  // null인 경우에만 생성
             instance = Retrofit.Builder()
