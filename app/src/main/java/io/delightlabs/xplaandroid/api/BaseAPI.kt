@@ -8,6 +8,7 @@ enum class OrderBy(val value: String) {
     ASCENDING("asc"),
     DESCENDING("desc")
 }
+
 data class PaginationOptions(
     var limit: String? = null,
     var offset: String? = null,
@@ -30,7 +31,7 @@ data class PaginationOptions(
 }
 
 
-open class BaseAPI (private val retrofit: RetrofitConnection){
+open class BaseAPI(private val retrofit: RetrofitConnection) {
     val retrofitConnection = retrofit
 
     fun <T> runAPI(api: Call<T>): T? {
