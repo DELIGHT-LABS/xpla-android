@@ -7,6 +7,7 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
+import retrofit2.http.Headers
 import retrofit2.http.POST
 import retrofit2.http.Path
 import wallet.core.jni.Hash
@@ -36,19 +37,26 @@ enum class XplaNetwork: Network {
 
 typealias APIParams = Map<String, Any?>
 
+interface simulateAPIService {
+    @POST("cosmos/tx/v1beta1/simulate")
+    fun broadcastTransaction2 (
+        @Body params: HashMap<String, Any>
+    ): Call<APIReturn.SimulateTx>
+}
 interface APIService {
-    @POST("{endpoint}")
+
+    @POST("/cosmos/tx/v1beta1/txs")
     fun broadcastTransaction (
-        @Path("endpoint") endpoint: String,
         @Body params: HashMap<String, Any>
         ): Call<APIReturn.BroadcastResponse>
 }
+
 class RetrofitConnection(private val network: XplaNetwork) {
 
     private val url = network.url
-
     private var instance: Retrofit? = null
-    fun test(endpoint: String, params: HashMap<String, Any>): Retrofit {
+
+    fun test2(endpoint: String, params: HashMap<String, Any>): Retrofit {
 
         println("url \uD83E\uDD28: $url")
         val retrofit = Retrofit.Builder()
@@ -56,17 +64,17 @@ class RetrofitConnection(private val network: XplaNetwork) {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
-        println("retrofit \uD83E\uDD28: $retrofit")
+        println("retrofit \uD83E\uDD28: ${retrofit.baseUrl()}")
 
-        val apiService = retrofit.create(APIService::class.java)
+        val apiService = retrofit.create(simulateAPIService::class.java)
         var endpoint = endpoint
         var params = params
 
         println("apiServe \uD83E\uDD28: $apiService")
 
         println("endpoint \uD83E\uDD28: $endpoint")
-        println("params \uD83E\uDD28: $params")
-        val call = apiService.broadcastTransaction(endpoint, params)
+        println("params \uD83E\uDD28: ${params}")
+        val call = apiService.broadcastTransaction2(params)
 
         println("call \uD83E\uDD28: $call")
         try {
@@ -74,6 +82,7 @@ class RetrofitConnection(private val network: XplaNetwork) {
             val response = call.execute()
             println("statuscode \uD83E\uDD28: ${response.code()}")
             println("responseResult \uD83E\uDD28: ${response.isSuccessful}")
+            println("bodyzzz \uD83E\uDD28: ${response.body()}")
             if (response.isSuccessful) {
                 val broadcastResponse = response.body()
                 println("broadcastzz \uD83E\uDD28: $broadcastResponse")
@@ -83,20 +92,46 @@ class RetrofitConnection(private val network: XplaNetwork) {
         } catch (e: Exception) {
             println("Failed to execute request \uD83E\uDD28: ${e.message}")
         }
-//        call.enqueue(object : Callback<APIReturn.BroadcastResponse> {
-//            override fun onResponse(call: Call<APIReturn.BroadcastResponse>, response: Response<APIReturn.BroadcastResponse>) {
-//                if (response.isSuccessful) {
-//                    val broadcastResponse = response.body()
-//                    println("broadcastzz: " + "$broadcastResponse")
-//                } else {
-//                    println("zzz: " + "error")
-//                }
-//            }
-//
-//            override fun onFailure(call: Call<APIReturn.BroadcastResponse>, t: Throwable) {
-////                println("zzz: " + "error")
-//            }
-//        })
+
+        return retrofit
+    }
+    fun test(endpoint: String, params: HashMap<String, Any>): Retrofit {
+
+        println("url \uD83E\uDD28: $url")
+        val retrofit = Retrofit.Builder()
+            .baseUrl(url)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        println("retrofit \uD83E\uDD28: ${retrofit.baseUrl()}")
+
+        val apiService = retrofit.create(APIService::class.java)
+        var endpoint = endpoint
+        var params = params
+
+        println("apiServe \uD83E\uDD28: $apiService")
+
+        println("endpoint \uD83E\uDD28: $endpoint")
+        println("params \uD83E\uDD28: ${params}")
+        val call = apiService.broadcastTransaction(params)
+
+        println("call \uD83E\uDD28: $call")
+        try {
+            // 동기적으로 요청을 실행하고 응답을 받음
+            val response = call.execute()
+            println("statuscode \uD83E\uDD28: ${response.code()}")
+            println("responseResult \uD83E\uDD28: ${response.isSuccessful}")
+            println("bodyzzz \uD83E\uDD28: ${response.body()}")
+            if (response.isSuccessful) {
+                val broadcastResponse = response.body()
+                println("broadcastzz \uD83E\uDD28: $broadcastResponse")
+            } else {
+                println("zzz \uD83E\uDD28: error")
+            }
+        } catch (e: Exception) {
+            println("Failed to execute request \uD83E\uDD28: ${e.message}")
+        }
+
         return retrofit
     }
     fun getInstance(): Retrofit {

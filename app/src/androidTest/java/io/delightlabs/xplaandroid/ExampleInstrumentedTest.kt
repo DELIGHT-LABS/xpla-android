@@ -110,8 +110,10 @@ class ExampleInstrumentedTest {
                 CreateTxOptions(msgs = listOf(sendMsg))
             )
 
+            println("createTx \uD83E\uDD28: ${createTx.body.memo} ${createTx.authInfo.fee.gasLimit}")
+
             lcd.txAPI.broadcast(createTx)?.let {
-//                println("broadcastzz: " + "$it")
+                println("broadcastzz: " + "${it}")
             }
         }
     }

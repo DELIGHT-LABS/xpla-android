@@ -155,7 +155,9 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
                     this.sequence = sequence
                     this.publicKey = publicKey.getAsGoogleProto()
                     this.modeInfo = modeInfo {
-                        this.single = TxOuterClass.ModeInfo.Single.newBuilder().setMode(Signing.SignMode.SIGN_MODE_DIRECT).build()
+                        this.single = TxOuterClass.ModeInfo.Single.newBuilder()
+                            .setMode(Signing.SignMode.SIGN_MODE_DIRECT)
+                            .build()
                     }
                 }
             )

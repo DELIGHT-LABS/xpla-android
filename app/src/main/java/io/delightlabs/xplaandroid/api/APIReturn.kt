@@ -140,6 +140,7 @@ class APIReturn {
     )
 
     data class SimulateTx(
+        @SerializedName("gas_info")
         val gasInfo: GasInfo,
         val result: ResultClass
     )
