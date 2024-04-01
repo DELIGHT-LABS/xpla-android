@@ -79,18 +79,18 @@ protobuf {
         all().forEach {
             it.plugins {
                 create("grpc") {
-                    option("lite")
+//                    option("lite")
                 }
                 create("grpckt") {
-                    option("lite")
+//                    option("lite")
                 }
             }
             it.builtins {
                 create("java") {
-                    option("lite")
+//                    option("lite")
                 }
                 create("kotlin") {
-                    option("lite")
+//                    option("lite")
                 }
             }
         }

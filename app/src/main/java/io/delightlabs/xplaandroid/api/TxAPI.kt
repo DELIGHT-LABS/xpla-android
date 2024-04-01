@@ -1,30 +1,14 @@
 package io.delightlabs.xplaandroid.api
 
-import android.icu.lang.UCharacter.GraphemeClusterBreak.L
-import com.google.gson.Gson
+import android.util.Base64
 import com.google.protobuf.Any
 import com.google.protobuf.ByteString
-import com.google.protobuf.DescriptorProtos.FeatureSet.JsonFormat
-import com.google.protobuf.UInt64Value
-import com.google.protobuf.kotlin.DslList
-import com.google.protobuf.kotlin.toByteStringUtf8
-import com.google.protobuf.option
-import cosmos.bank.v1beta1.Tx
+import com.google.protobuf.kotlin.toByteString
 import cosmos.base.v1beta1.CoinOuterClass.Coin
-import cosmos.base.v1beta1.coin
-import cosmos.msg.v1.Msg.signer
 import cosmos.tx.signing.v1beta1.Signing
-import cosmos.tx.signing.v1beta1.Signing.SignMode
-import cosmos.tx.v1beta1.AuthInfoKt
-import cosmos.tx.v1beta1.FeeKt
-import cosmos.tx.v1beta1.ModeInfoKt
-import cosmos.tx.v1beta1.SignerInfoKt
-import cosmos.tx.v1beta1.TxBodyKt
-import cosmos.tx.v1beta1.TxKt
 import cosmos.tx.v1beta1.TxOuterClass
-import cosmos.tx.v1beta1.TxOuterClass.ModeInfo
-import cosmos.tx.v1beta1.TxOuterClass.ModeInfo.Single
-import cosmos.tx.v1beta1.TxOuterClass.TxBody
+import cosmos.tx.v1beta1.TxOuterClass.AuthInfo
+import cosmos.tx.v1beta1.TxOuterClass.SignerInfo
 import cosmos.tx.v1beta1.authInfo
 import cosmos.tx.v1beta1.fee
 import cosmos.tx.v1beta1.modeInfo
@@ -34,33 +18,13 @@ import cosmos.tx.v1beta1.txBody
 import io.delightlabs.xplaandroid.CreateTxOptions
 import io.delightlabs.xplaandroid.LCDClient
 import io.delightlabs.xplaandroid.pubkeyProtoType
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import okhttp3.internal.http.HttpMethod
-import org.checkerframework.checker.units.qual.s
-import retrofit2.Call
 import retrofit2.Retrofit
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Path
-import wallet.core.jni.proto.Cosmos.Fee
-import wallet.core.jni.proto.Cosmos.SignerInfo
-import java.lang.Exception
-import kotlin.math.sign
-import java.util.Base64
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.coroutineScope
-import org.checkerframework.checker.units.qual.t
-import kotlin.math.cos
 
 class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) {
 
     private val retrofit = lcdClient.apiRequester
-    private val tx = cosmos.tx.v1beta1.TxOuterClass.Tx.newBuilder()
-    private val body = cosmos.tx.v1beta1.TxOuterClass.TxBody.newBuilder()
+    private val tx = TxOuterClass.Tx.newBuilder()
+    private val body = TxOuterClass.TxBody.newBuilder()
     private val authInfo = TxOuterClass.AuthInfo.newBuilder()
 
     private val emptyFee = fee {
@@ -82,38 +46,38 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
         val publicKey: String?
     )
 
-    fun cosmos.tx.v1beta1.TxOuterClass.Tx.appendEmptySignatures(signers: List<TxOuterClass.SignerInfo>): TxOuterClass.Tx {
+    fun TxOuterClass.Tx.appendEmptySignatures(signers: List<SignerInfo>) : TxOuterClass.Tx {
+        val builder = this.toBuilder()
+        val authInfo = this.authInfo.toBuilder()
         signers.forEach {
-            var signerInfo: TxOuterClass.SignerInfo?
-            signerInfo = signerInfo {
+            val signerInfo: SignerInfo = signerInfo {
                 this.publicKey = it.publicKey
                 this.sequence = it.sequence
                 this.modeInfo = modeInfo {
-                    this.single = TxOuterClass.ModeInfo.Single
-                        .newBuilder()
-                        .setMode(Signing.SignMode.SIGN_MODE_DIRECT)
-                        .build()
+                    this.single = TxOuterClass.ModeInfo.Single.newBuilder()
+                        .setMode(Signing.SignMode.SIGN_MODE_DIRECT).build()
                 }
             }
-            this.authInfo.toBuilder()
-                .addSignerInfos(signerInfo)
-                .build()
-
-//            this.signaturesList.add(ByteString.EMPTY)
+            authInfo.addSignerInfos(signerInfo)
+            builder.addSignatures(ByteString.EMPTY)
         }
 
-        return this
+        return builder
+            .setAuthInfo(authInfo.build())
+            .build()
     }
 
+
+    @OptIn(ExperimentalStdlibApi::class)
     fun create(
         signers: List<SignerOptions>,
         options: CreateTxOptions
-    ): cosmos.tx.v1beta1.TxOuterClass.Tx {
-        var fee: cosmos.tx.v1beta1.TxOuterClass.Fee? = null
-        val msgs: List<com.google.protobuf.Any> = options.msgs
-        var memo = options.memo
+    ): TxOuterClass.Tx {
+        var fee: TxOuterClass.Fee? = null
+        val msgs: List<Any> = options.msgs
+        val memo = options.memo
         val timeoutHeight = options.timeoutHeight
-        var signerDatas: MutableList<TxOuterClass.SignerInfo> = mutableListOf()
+        val signerDatas: MutableList<SignerInfo> = mutableListOf()
 
         for (signer in signers) {
             var sequenceNumber = signer.sequenceNumber
@@ -138,13 +102,14 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
                     signerDatas.add(
                         signerInfo {
                             this.sequence = sequenceNumber.toLong()
-                            this.publicKey = com.google.protobuf.Any.newBuilder()
-                                .setValue("0a21$publicKey".toByteStringUtf8())
+                            this.publicKey = Any.newBuilder()
+                                .setValue("0a21$publicKey".hexToByteArray().toByteString())
                                 .setTypeUrl(pubkeyProtoType)
                                 .build()
                         }
                     )
                 }
+
             }
         }
 
@@ -156,11 +121,7 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
                 )
         }
 
-        println("estimateFee \uD83E\uDD28: $fee")
-
-        println("msgsResult \uD83E\uDD28: ${msgs.get(0)}")
         if (msgs.isEmpty()) {
-            println("msgsIsEmpty \uD83E\uDD28: ${msgs.isEmpty()}")
             return tx {
                 this.body = txBody {
                     this.messages.clear()
@@ -196,7 +157,7 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
     }
 
     fun estimateFee(
-        signers: List<TxOuterClass.SignerInfo>,
+        signers: List<SignerInfo>,
         options: CreateTxOptions,
     ): TxOuterClass.Fee {
         val gasPrices = if (options.gasPrices != null) options.gasPrices else lcdClient.gasPrices
@@ -207,13 +168,6 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
         var gas: String? = options.gas
         var gasPricesCoins: List<Coin> = listOf()
 
-        println(
-            "gasPrices \uD83E\uDD28: ${lcdClient.gasPrices.get(0).denom} ${
-                lcdClient.gasPrices.get(
-                    0
-                ).amount
-            }"
-        )
         gasPrices?.let { gasPrices ->
             gasPricesCoins = gasPrices
             feeDenoms?.let { feeDenoms ->
@@ -227,7 +181,6 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
             }
         }
 
-        println("gasMsgsResult \uD83E\uDD28: $msgs")
         if (msgs.isEmpty()) {
             return emptyFee
         }
@@ -264,20 +217,8 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
         if (gas == null || gas == "auto" || gas == "0") {
             println("gasAdjustment \uD83E\uDD28: $gasAdjustment")
             gasAdjustment?.toInt().let {
-                println("진입확인 \uD83E\uDD28")
-                println("tx 왜 안나와 \uD83E\uDD28: $tx")
-                println("authInfo fee gasLimit \uD83E\uDD28: ${tx.authInfo.fee.gasLimit}")
-                println("authInfo fee Amount \uD83E\uDD28: ${tx.authInfo.fee.amountCount}")
-                println("body messages \uD83E\uDD28: ${tx.body.getMessages(0)}")
-                println("estimateGas \uD83E\uDD28: ${estimateGas(tx, it!!)}")
-                println("gasAdjustment \uD83E\uDD28: ${it}")
-
-                estimateGas(tx, it!!)?.let {
-                    println("gas: 🤨${it.toString()}")
-                    println("tx \uD83E\uDD28: ${tx.body.messagesList.isEmpty()}")
-                    println("estimageGas \uD83E\uDD28: $it")
+                estimateGas(tx, it!!, signers)?.let {
                     gas = it.toString()
-
                 }
             }
         }
@@ -305,43 +246,37 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
     }
 
     fun estimateGas(
-        tx: cosmos.tx.v1beta1.TxOuterClass.Tx,
+        tx: TxOuterClass.Tx,
         gasAdjustment: Int,
-        signers: List<TxOuterClass.SignerInfo>? = null
+        signers: List<SignerInfo>? = null
     ): Int {
         var simTx = tx
-        println("tx 하하하 \uD83E\uDD28: ${tx.authInfo}")
-        println("signatureIsEmpty ${tx.signaturesList.isEmpty()}")
         if (tx.signaturesList.isEmpty()) {
-            println("signers: $signers")
-            signers?.let {
-                if (signers.isNotEmpty()) {
-                    // 에러처리
-                }
-
-                val authInfo = authInfo {
-                    this.signerInfos.clear()
-                    this.fee = fee {
-                        this.amount.clear()
-                        this.gasLimit = 0
-                    }
-                }
-
-                simTx = tx {
-                    this.body = tx.body
-                    this.authInfo = authInfo
-                    this.signatures.clear()
-                }
-                simTx = simTx.appendEmptySignatures(signers)
+            if (!signers.isNullOrEmpty()) {
+//                throw TxAPIError.signatureNotValid
             }
+
+            val authInfo = AuthInfo.newBuilder()
+                .clearSignerInfos()
+                .setFee(
+                    TxOuterClass.Fee.newBuilder()
+                        .setGasLimit(0)
+                        .clearAmount().build()
+                ).build()
+
+            simTx = tx {
+                this.body = tx.body
+                this.authInfo = authInfo
+                this.signatures.clear()
+            }
+            simTx = simTx.appendEmptySignatures(signers ?: emptyList())
+
         }
 
-        println("signers \uD83E\uDD28: ${signers}")
-        println("simTx \uD83E\uDD28: ${simTx.body.messagesList} ${simTx.authInfo.signerInfosList} ${simTx.signaturesList}")
 
         val simulateRes = lcdClient.apiRequester.test2(
             "cosmos/tx/v1beta1/simulate", hashMapOf<String, kotlin.Any>(
-                "tx_bytes" to Base64.getEncoder().encodeToString(simTx.toByteArray())
+                "tx_bytes" to Base64.encodeToString(simTx.toByteArray(), 0)
             )
         )
 
@@ -350,9 +285,8 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
         return 0
     }
 
-    fun broadcast(tx: cosmos.tx.v1beta1.TxOuterClass.Tx): Retrofit? {
-
-        var encodedTxBytes = Base64.getEncoder().encodeToString(tx.toByteArray())
+    fun broadcast(tx: TxOuterClass.Tx): Retrofit? {
+        val encodedTxBytes = Base64.encodeToString(tx.toByteArray(), 0)
 
         val params = hashMapOf<String, kotlin.Any>(
             "tx_bytes" to encodedTxBytes,

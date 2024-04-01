@@ -110,11 +110,10 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
             options = options
         )
         println("address \uD83E\uDD28: $address")
-        println("sequenceNumber \uD83E\uDD28: ${options.sequence}")
         println("publicKey \uD83E\uDD28: ${publicKey.data().toHexString()}")
 
-        println("optionMsgs \uD83E\uDD28: ${options.msgs[0].value}")
-        println("txResult \uD83E\uDD28: $tx")
+//        println("optionMsgs \uD83E\uDD28: ${options.msgs[0]}")
+//        println("txResult \uD83E\uDD28: $tx")
         return tx
     }
     public fun createAndSignTx(
@@ -127,6 +126,8 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
         if (accountNumber == null || sequence == null) {
             accountNumAndSequence()?.let {
                 accountNumber = it.baseAccount.accountNumber.toInt()
+                val x = it.baseAccount.sequence.toInt()
+                println(x)
                 sequence = it.baseAccount.sequence.toInt()
             }
         }
@@ -192,7 +193,7 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
     fun com.google.protobuf.Any.getAsGoogleProto(): com.google.protobuf.Any {
         return any {
             val hex = "0a21"
-            this.value = "0a21${publicKey.data().toHexString()}".toByteStringUtf8()
+            this.value = "0a21${publicKey.data().toHexString()}".hexToByteArray().toByteString()
             this.typeUrl = pubkeyProtoType
         }
     }

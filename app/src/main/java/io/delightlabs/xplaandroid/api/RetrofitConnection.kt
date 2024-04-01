@@ -58,7 +58,6 @@ class RetrofitConnection(private val network: XplaNetwork) {
 
     fun test2(endpoint: String, params: HashMap<String, Any>): Retrofit {
 
-        println("url \uD83E\uDD28: $url")
         val retrofit = Retrofit.Builder()
             .baseUrl(url)
             .addConverterFactory(GsonConverterFactory.create())
@@ -70,13 +69,11 @@ class RetrofitConnection(private val network: XplaNetwork) {
         var endpoint = endpoint
         var params = params
 
-        println("apiServe \uD83E\uDD28: $apiService")
 
         println("endpoint \uD83E\uDD28: $endpoint")
         println("params \uD83E\uDD28: ${params}")
         val call = apiService.broadcastTransaction2(params)
 
-        println("call \uD83E\uDD28: $call")
         try {
             // 동기적으로 요청을 실행하고 응답을 받음
             val response = call.execute()
@@ -87,7 +84,7 @@ class RetrofitConnection(private val network: XplaNetwork) {
                 val broadcastResponse = response.body()
                 println("broadcastzz \uD83E\uDD28: $broadcastResponse")
             } else {
-                println("zzz \uD83E\uDD28: error")
+                println("zzz \uD83E\uDD28: ${response.errorBody()}")
             }
         } catch (e: Exception) {
             println("Failed to execute request \uD83E\uDD28: ${e.message}")

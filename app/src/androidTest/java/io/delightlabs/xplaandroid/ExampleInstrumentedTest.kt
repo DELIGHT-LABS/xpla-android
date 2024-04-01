@@ -1,19 +1,11 @@
 package io.delightlabs.xplaandroid
 
-import wallet.core.jni.HDWallet
-import android.util.Base64
-import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
-import com.google.gson.Gson
-import com.google.protobuf.kotlin.DslList
+import com.google.protobuf.Any
+import cosmos.bank.v1beta1.Tx.MsgSend
 import cosmos.bank.v1beta1.msgSend
-import cosmos.base.v1beta1.CoinKt
 import cosmos.base.v1beta1.CoinOuterClass.Coin
-import cosmos.base.v1beta1.coin
-import io.delightlabs.xplaandroid.api.APIReturn
 import io.delightlabs.xplaandroid.api.XplaNetwork
-import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -77,19 +69,11 @@ class ExampleInstrumentedTest {
         lcd.wallet(mnemonic = seedPhrase)?.let {
             val offerAmount = 1000000000000000000
 
-//            val sendCoin = coin {
-//                this.amount = "$offerAmount"
-//                this.denom = "axpla"
-//            }
 
             val sendCoin = Coin.newBuilder()
                 .setAmount("$offerAmount")
                 .setDenom("axpla")
                 .build()
-
-//            println("sendCoin2 \uD83E\uDD28: ${sendCoin2.toString()}")
-
-            println("sendCoin \uD83E\uDD28: ${sendCoin.amount} ${sendCoin.denom}")
 
             val txSend = msgSend {
                 this.toAddress = it.address
@@ -97,24 +81,17 @@ class ExampleInstrumentedTest {
                 this.amount.add(sendCoin)
             }
 
-            println("txSend \uD83E\uDD28: ${txSend.toAddress} ${txSend.fromAddress} ${txSend.getAmountOrBuilder(0).amount} ${txSend.getAmountOrBuilder(0).denom}")
-
-            val sendMsg = com.google.protobuf.Any.newBuilder()
-                .setTypeUrl("")
-                .setValue(txSend.toByteString())
-                .build()
-
-            println("sendMsg \uD83E\uDD28: $sendMsg")
-
             val createTx = it.createAndSignTx(
-                CreateTxOptions(msgs = listOf(sendMsg))
+                CreateTxOptions(msgs = listOf(Any.pack(txSend, "")))
             )
 
-            println("createTx \uD83E\uDD28: ${createTx.body.memo} ${createTx.authInfo.fee.gasLimit}")
-
-            lcd.txAPI.broadcast(createTx)?.let {
-                println("broadcastzz: " + "${it}")
-            }
+//            lcd.txAPI.broadcast(createTx)?.let {
+//                println("broadcastzz: " + "${it}")
+//            }
         }
     }
+
+
+
 }
+
