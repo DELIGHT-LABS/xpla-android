@@ -39,7 +39,7 @@ typealias APIParams = Map<String, Any?>
 
 interface simulateAPIService {
     @POST("cosmos/tx/v1beta1/simulate")
-    fun broadcastTransaction2 (
+    fun simultate (
         @Body params: HashMap<String, Any>
     ): Call<APIReturn.SimulateTx>
 }
@@ -72,7 +72,7 @@ class RetrofitConnection(private val network: XplaNetwork) {
 
         println("endpoint \uD83E\uDD28: $endpoint")
         println("params \uD83E\uDD28: ${params}")
-        val call = apiService.broadcastTransaction2(params)
+        val call = apiService.simultate(params)
 
         try {
             // 동기적으로 요청을 실행하고 응답을 받음

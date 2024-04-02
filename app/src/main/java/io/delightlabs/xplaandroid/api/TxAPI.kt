@@ -295,15 +295,17 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
         }
 
         println("txbody:: ${Base64.encodeToString(simTx.body.toByteArray(), 0)}")
-        val simulateRes = lcdClient.apiRequester.test2(
-            "cosmos/tx/v1beta1/simulate", hashMapOf<String, kotlin.Any>(
-                "tx_bytes" to Base64.encodeToString(simTx.toByteArray(), 0)
-            )
-        )
+//        val simulateRes :  = lcdClient.apiRequester.test2(
+//            "cosmos/tx/v1beta1/simulate", hashMapOf<String, kotlin.Any>(
+//                "tx_bytes" to Base64.encodeToString(simTx.toByteArray(), 0)
+//            )
+//        )
+        val simul: simulateAPIService = retrofit.getInstance().create(simulateAPIService::class.java)
 
-        println("simulateResult \uD83E\uDD28: ${simulateRes}")
+        val simulateRes = runAPI(simul.simultate( hashMapOf( "tx_bytes" to Base64.encodeToString(simTx.toByteArray(), 0))))
 
-        return 0
+
+        return gasAdjustment * ((simulateRes?.gasInfo?.gasUsed)?.toInt() ?: 1)
     }
 
     fun broadcast(tx: TxOuterClass.Tx): Retrofit? {

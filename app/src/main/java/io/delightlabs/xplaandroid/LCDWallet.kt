@@ -176,7 +176,7 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
         }
 
         val xx = Base64.encodeToString(signDoc.toByteArray(), 0)
-        val x = keccak256(signDoc.toByteArray())
+        val x = keccak256(signDoc.toByteArray()).toHexString()
         privateKey.sign(keccak256(signDoc.toByteArray()), Curve.SECP256K1)?.let {
             val sig = it.dropLast(1).map { it.toUInt() }
             val byteArray = ByteArray(sig.size * 4) // Each UInt occupies 4 bytes
