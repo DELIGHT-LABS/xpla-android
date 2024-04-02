@@ -30,6 +30,7 @@ import wallet.core.jni.Hash.keccak256
 import wallet.core.jni.PrivateKey
 import wallet.core.jni.PublicKey
 import wallet.core.jni.proto.NEAR
+import kotlin.experimental.and
 
 
 data class SignOptions(
@@ -175,20 +176,20 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
             this.authInfoBytes = authInfo.toByteString()
         }
 
-        val xx = Base64.encodeToString(signDoc.toByteArray(), 0)
+        val xx =  signDoc.toByteArray().map { it.toUByte().toInt() } // .toByteArray() //Base64.encodeToString(, 0)
         val x = keccak256(signDoc.toByteArray()).toHexString()
         privateKey.sign(keccak256(signDoc.toByteArray()), Curve.SECP256K1)?.let {
-            val sig = it.dropLast(1).map { it.toUInt() }
+            val sig = it.dropLast(1) // .map { it.toUByte() }
             val byteArray = ByteArray(sig.size * 4) // Each UInt occupies 4 bytes
-
-            sig.forEachIndexed { index, uintValue ->
-                val byteIndex = index * 4
-                byteArray[byteIndex] = (uintValue and 0xFF000000U).toInt().ushr(24).toByte()
-                byteArray[byteIndex + 1] = (uintValue and 0x00FF0000U).toInt().ushr(16).toByte()
-                byteArray[byteIndex + 2] = (uintValue and 0x0000FF00U).toInt().ushr(8).toByte()
-                byteArray[byteIndex + 3] = (uintValue and 0x000000FFU).toInt().toByte()
-            }
-            return byteArray
+//
+//            sig.forEachIndexed { index, uintValue ->
+//                val byteIndex = index * 4
+//                byteArray[byteIndex] = (uintValue and 0xFF000000U).toInt().ushr(24).toByte()
+//                byteArray[byteIndex + 1] = (uintValue and 0x00FF0000U).toInt().ushr(16).toByte()
+//                byteArray[byteIndex + 2] = (uintValue and 0x0000FF00U).toInt().ushr(8).toByte()
+//                byteArray[byteIndex + 3] = (uintValue and 0x000000FFU).toInt().toByte()
+//            }
+            return sig.toByteArray()
 
         }
         return null
