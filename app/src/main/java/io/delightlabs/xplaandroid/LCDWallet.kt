@@ -1,5 +1,6 @@
 package io.delightlabs.xplaandroid
 
+import android.util.Base64
 import android.util.Log
 import com.google.protobuf.ByteString
 import com.google.protobuf.UInt64Value
@@ -162,6 +163,7 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
                     }
                 }
             )
+            this.fee = fee
         }
     }
 
@@ -170,11 +172,13 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
             this.chainId = options.chainInt
             this.accountNumber = options.accountNumber!!.toLong()
             this.bodyBytes = tx.body.toByteString()
-            this.authInfoBytes = tx.authInfo.toByteString()
+            this.authInfoBytes = authInfo.toByteString()
         }
 
+        val xx = Base64.encodeToString(signDoc.toByteArray(), 0)
+        val x = keccak256(signDoc.toByteArray())
         privateKey.sign(keccak256(signDoc.toByteArray()), Curve.SECP256K1)?.let {
-            val sig = it.dropLast(1).map { it.toUInt() }.toTypedArray()
+            val sig = it.dropLast(1).map { it.toUInt() }
             val byteArray = ByteArray(sig.size * 4) // Each UInt occupies 4 bytes
 
             sig.forEachIndexed { index, uintValue ->

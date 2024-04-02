@@ -81,13 +81,18 @@ class ExampleInstrumentedTest {
                 this.amount.add(sendCoin)
             }
 
+            val any = Any.newBuilder()
+                .setTypeUrl("/cosmos.bank.v1beta1.MsgSend")
+                .setValue(txSend.toByteString())
+                .build()
+
             val createTx = it.createAndSignTx(
-                CreateTxOptions(msgs = listOf(Any.pack(txSend, "")))
+                CreateTxOptions(msgs = listOf(any))
             )
 
-//            lcd.txAPI.broadcast(createTx)?.let {
-//                println("broadcastzz: " + "${it}")
-//            }
+            lcd.txAPI.broadcast(createTx)?.let {
+                println("broadcastzz: " + "${it}")
+            }
         }
     }
 

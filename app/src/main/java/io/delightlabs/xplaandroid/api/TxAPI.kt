@@ -3,9 +3,11 @@ package io.delightlabs.xplaandroid.api
 import android.util.Base64
 import com.google.protobuf.Any
 import com.google.protobuf.ByteString
+import com.google.protobuf.kotlin.DslList
 import com.google.protobuf.kotlin.toByteString
 import cosmos.base.v1beta1.CoinOuterClass.Coin
 import cosmos.tx.signing.v1beta1.Signing
+import cosmos.tx.v1beta1.FeeKt
 import cosmos.tx.v1beta1.TxOuterClass
 import cosmos.tx.v1beta1.TxOuterClass.AuthInfo
 import cosmos.tx.v1beta1.TxOuterClass.SignerInfo
@@ -20,6 +22,7 @@ import io.delightlabs.xplaandroid.LCDClient
 import io.delightlabs.xplaandroid.pubkeyProtoType
 import retrofit2.Retrofit
 
+@Suppress("UNUSED_EXPRESSION")
 class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) {
 
     private val retrofit = lcdClient.apiRequester
@@ -46,7 +49,7 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
         val publicKey: String?
     )
 
-    fun TxOuterClass.Tx.appendEmptySignatures(signers: List<SignerInfo>) : TxOuterClass.Tx {
+    fun TxOuterClass.Tx.appendEmptySignatures(signers: List<SignerInfo>): TxOuterClass.Tx {
         val builder = this.toBuilder()
         val authInfo = this.authInfo.toBuilder()
         signers.forEach {
@@ -192,13 +195,15 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
             this.memo = options.memo ?: ""
         }
 
-        val authInfo = authInfo {
-            this.signerInfos.clear()
-            this.fee = fee {
-                this.gasLimit = 0
-                this.amount.clear()
-            }
-        }
+
+        val authInfo = AuthInfo.newBuilder()
+            .clearSignerInfos()
+            .setFee(
+                TxOuterClass.Fee.newBuilder()
+                    .setGasLimit(0)
+                    .clearAmount().build()
+            ).build()
+
 
         var tx = tx {
             this.body = txbody
@@ -225,24 +230,40 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
 
         if (gas == null) {
             return emptyFee
+        } else {
+            val feeAmount = getCoinAmounts(gasPricesCoins, gas!!)
+
+            val returnFee = fee {
+                this.amount.clear()
+                feeAmount.let { this.amount.addAll(feeAmount) }
+                this.gasLimit = gas?.toLong() ?: 0
+                this.payer = ""
+                this.granter = ""
+            }
+
+
+            return returnFee
         }
 
-        val feeAmount = gasPricesCoins.map {
-            if (it.amount.toUIntOrNull() != null && gas?.toUIntOrNull() != null) {
+    }
+
+
+    private fun getCoinAmounts(gasPricesCoins: List<Coin>, gas: String): List<Coin> {
+        return gasPricesCoins.map {
+            val builder = Coin.newBuilder()
+            if (it.amount.toULongOrNull() != null && gas.toULongOrNull() != null) {
                 val coinAmount = it.amount.toULong()
-                gas?.toULong()?.let {
-                    val multipliedAmount = coinAmount * it
+                val denom = it.denom
+                gas.toULong().let {
+                    val multipliedAmount = (coinAmount * it).toString()
+                    builder.setAmount(multipliedAmount)
+                        .setDenom(denom)
+
                 }
             }
+            builder.build()
         }
 
-
-        return fee {
-            this.amount
-            this.gasLimit = gas?.toLong() ?: 0
-            this.payer = ""
-            this.granter = ""
-        }
     }
 
     fun estimateGas(
@@ -273,7 +294,7 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
 
         }
 
-
+        println("txbody:: ${Base64.encodeToString(simTx.body.toByteArray(), 0)}")
         val simulateRes = lcdClient.apiRequester.test2(
             "cosmos/tx/v1beta1/simulate", hashMapOf<String, kotlin.Any>(
                 "tx_bytes" to Base64.encodeToString(simTx.toByteArray(), 0)
