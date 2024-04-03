@@ -1,10 +1,17 @@
 package io.delightlabs.xplaandroid
 
+import android.util.Base64
+import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.google.gson.Gson
 import com.google.protobuf.Any
 import cosmos.bank.v1beta1.Tx.MsgSend
 import cosmos.bank.v1beta1.msgSend
 import cosmos.base.v1beta1.CoinOuterClass.Coin
+import cosmos.tx.v1beta1.tx
+import io.delightlabs.xplaandroid.api.APIReturn
+import io.delightlabs.xplaandroid.api.BroadCastAPIService
+import io.delightlabs.xplaandroid.api.SimulateAPIService
 import io.delightlabs.xplaandroid.api.XplaNetwork
 import org.junit.Assert.*
 import org.junit.Test
@@ -18,8 +25,6 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class ExampleInstrumentedTest {
-
-
     private val lcd = LCDClient(
         network = XplaNetwork.TestNet,
         gasAdjustment = "3",
@@ -32,36 +37,31 @@ class ExampleInstrumentedTest {
 //        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
 //        assertEquals("io.delightlabs.xplaandroid", appContext.packageName)
 //    }
-//
-//    @Test
-//    fun lcdWallet(){
-//        val seedPhrase = "table dinner sibling crisp hen genuine wing volume sport north omit cushion struggle script dinosaur merge medal visa also mixture faint surge boy wild"
-//        val wallet = lcd.wallet(seedPhrase)
-//        assertEquals("xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9", wallet.address)
-//    }
-//
-//    @Test
-//    fun lcdAuth() {
-//        val response: APIReturn.Account? = lcd.authAPI.accountInfo("xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9")
-//        response?.baseAccount?.let { Log.d("response", it.getPublicKey()) }
-//    }
-//
-//    data class Query(val pairs: Pairs)
-//    data class Pairs(val limit: Int)
-//    @Test
-//    fun lcdWasm() {
-//        val stringMap: MutableMap<String, Any?> = LinkedHashMap()
-//        val pairs: MutableMap<String, Any?> = LinkedHashMap()
-//        pairs["limit"] = "20"
-//        stringMap["pairs"] = pairs
-//        Log.d("map", Base64.encodeToString(stringMap.toString().toByteArray(), 1))
-//        val query = Query(Pairs(20))
-//        val gson = Gson()
-//        val json = gson.toJson(query)
-//        Log.d("json", json)
-//        val response: APIReturn.SmartQuery? = lcd.wasmAPI.contractQuery("xpla1j4kgjl6h4rt96uddtzdxdu39h0mhn4vrtydufdrk4uxxnrpsnw2qug2yx2", json.toString())
-//        response?.let { Log.d("response",""+it.data.pairs[0]) }
-//    }
+
+    @Test
+    fun lcdWallet(){
+        val seedPhrase = "table dinner sibling crisp hen genuine wing volume sport north omit cushion struggle script dinosaur merge medal visa also mixture faint surge boy wild"
+        val wallet = lcd.wallet(seedPhrase)
+        assertEquals("xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9", wallet.address)
+    }
+
+    @Test
+    fun lcdAuth() {
+        val response: APIReturn.Account? = lcd.authAPI.accountInfo("xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9")
+        response?.baseAccount?.let { Log.d("response", it.getPublicKey()) }
+    }
+
+    data class Query(val pairs: Pairs)
+    data class Pairs(val limit: Int)
+    @Test
+    fun lcdWasm() {
+        val pairs: MutableMap<String, Any?> = LinkedHashMap()
+        val query = Query(Pairs(20))
+        val gson = Gson()
+        val json = gson.toJson(query)
+        val response: APIReturn.SmartQuery? = lcd.wasmAPI.contractQuery("xpla1j4kgjl6h4rt96uddtzdxdu39h0mhn4vrtydufdrk4uxxnrpsnw2qug2yx2", json.toString())
+        response?.let { Log.d("response",""+it.data.pairs[0]) }
+    }
 
     @Test
     fun testCreateTx() {
@@ -90,13 +90,9 @@ class ExampleInstrumentedTest {
                 CreateTxOptions(msgs = listOf(any))
             )
 
-            lcd.txAPI.broadcast(createTx)?.let {
-                println("broadcastzz: " + "${it}")
-            }
+            val broadcastRes = lcd.txAPI.broadcast(createTx)
+            println("broadcastRes: $broadcastRes")
         }
     }
-
-
-
 }
 

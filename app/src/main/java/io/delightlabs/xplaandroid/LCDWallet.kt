@@ -1,36 +1,25 @@
 package io.delightlabs.xplaandroid
 
-import android.util.Base64
-import android.util.Log
-import com.google.protobuf.ByteString
-import com.google.protobuf.UInt64Value
 import com.google.protobuf.any
 import com.google.protobuf.kotlin.toByteString
-import com.google.protobuf.kotlin.toByteStringUtf8
 import cosmos.base.v1beta1.CoinOuterClass.Coin
-import cosmos.tx.signing.v1beta1.SignatureDescriptorKt.data
 import cosmos.tx.signing.v1beta1.Signing
 import cosmos.tx.v1beta1.TxOuterClass
 import cosmos.tx.v1beta1.TxOuterClass.AuthInfo
 import cosmos.tx.v1beta1.TxOuterClass.Fee
 import cosmos.tx.v1beta1.authInfo
-import cosmos.tx.v1beta1.authInfoOrNull
 import cosmos.tx.v1beta1.modeInfo
 import cosmos.tx.v1beta1.signDoc
-import cosmos.tx.v1beta1.signDocDirectAux
 import cosmos.tx.v1beta1.signerInfo
+//import io.delightlabs.xplaandroid.Extension.getAsGoogleProto
 import io.delightlabs.xplaandroid.api.APIReturn
 import io.delightlabs.xplaandroid.api.TxAPI
-import io.delightlabs.xplaandroid.core.Bech32
 import io.delightlabs.xplaandroid.core.SegwitAddrCoder
-import org.checkerframework.checker.units.qual.g
 import wallet.core.jni.Curve
 import wallet.core.jni.HDWallet
 import wallet.core.jni.Hash.keccak256
 import wallet.core.jni.PrivateKey
 import wallet.core.jni.PublicKey
-import wallet.core.jni.proto.NEAR
-import kotlin.experimental.and
 
 
 data class SignOptions(
@@ -74,7 +63,6 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
         val x1 = keccak256(hex.hexToByteArray()).toHexString()
         val x2 = x1.slice(24..<x1.length)
         val xplaAddress = SegwitAddrCoder().encode2("xpla", x2.hexToByteArray())
-        println("xplaAddress \uD83E\uDD28: $xplaAddress")
 
         this.privateKey = privateKey
         this.publicKey = privateKey.getPublicKeySecp256k1(true)
@@ -84,19 +72,16 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
     }
 
     fun accountNumAndSequence(): APIReturn.Account? {
-        println("account \uD83E\uDD28: ${lcdClient.authAPI.accountInfo(this.address)}")
         return lcdClient.authAPI.accountInfo(this.address)
     }
 
     fun accountNumber(): Int? {
         val response = lcdClient.authAPI.accountInfo(this.address)
-        println("accountNumber \uD83E\uDD28: $response")
         return response?.baseAccount?.accountNumber?.toIntOrNull()
     }
 
     fun sequence(): Int? {
         val response = lcdClient.authAPI.accountInfo(this.address)
-        println("sequence \uD83E\uDD28: $response")
         return response?.baseAccount?.sequence?.toIntOrNull()
     }
 
@@ -111,11 +96,6 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
             ),
             options = options
         )
-        println("address \uD83E\uDD28: $address")
-        println("publicKey \uD83E\uDD28: ${publicKey.data().toHexString()}")
-
-//        println("optionMsgs \uD83E\uDD28: ${options.msgs[0]}")
-//        println("txResult \uD83E\uDD28: $tx")
         return tx
     }
     public fun createAndSignTx(
@@ -128,8 +108,6 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
         if (accountNumber == null || sequence == null) {
             accountNumAndSequence()?.let {
                 accountNumber = it.baseAccount.accountNumber.toInt()
-                val x = it.baseAccount.sequence.toInt()
-                println(x)
                 sequence = it.baseAccount.sequence.toInt()
             }
         }
@@ -176,21 +154,9 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
             this.authInfoBytes = authInfo.toByteString()
         }
 
-        val xx =  signDoc.toByteArray().map { it.toUByte().toInt() } // .toByteArray() //Base64.encodeToString(, 0)
-        val x = keccak256(signDoc.toByteArray()).toHexString()
         privateKey.sign(keccak256(signDoc.toByteArray()), Curve.SECP256K1)?.let {
             val sig = it.dropLast(1) // .map { it.toUByte() }
-            val byteArray = ByteArray(sig.size * 4) // Each UInt occupies 4 bytes
-//
-//            sig.forEachIndexed { index, uintValue ->
-//                val byteIndex = index * 4
-//                byteArray[byteIndex] = (uintValue and 0xFF000000U).toInt().ushr(24).toByte()
-//                byteArray[byteIndex + 1] = (uintValue and 0x00FF0000U).toInt().ushr(16).toByte()
-//                byteArray[byteIndex + 2] = (uintValue and 0x0000FF00U).toInt().ushr(8).toByte()
-//                byteArray[byteIndex + 3] = (uintValue and 0x000000FFU).toInt().toByte()
-//            }
             return sig.toByteArray()
-
         }
         return null
     }
@@ -198,9 +164,8 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
     fun com.google.protobuf.Any.getAsGoogleProto(): com.google.protobuf.Any {
         return any {
             val hex = "0a21"
-            this.value = "0a21${publicKey.data().toHexString()}".hexToByteArray().toByteString()
+            this.value = "${hex}${publicKey.data().toHexString()}".hexToByteArray().toByteString()
             this.typeUrl = pubkeyProtoType
         }
     }
-
 }

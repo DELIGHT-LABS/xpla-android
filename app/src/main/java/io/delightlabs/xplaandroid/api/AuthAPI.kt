@@ -8,6 +8,13 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
 
+interface Auth {
+    @GET("/cosmos/auth/v1beta1/accounts/{address}")
+    fun getUser(
+        @Path("address") address: String
+    ): Call<APIReturn.AccountReturn>
+}
+
 class AuthAPI(private val retrofit: RetrofitConnection): BaseAPI(retrofit) {
 
     private val auth: Auth = retrofit.getInstance().create(Auth::class.java)
@@ -16,9 +23,3 @@ class AuthAPI(private val retrofit: RetrofitConnection): BaseAPI(retrofit) {
     }
 }
 
-interface Auth {
-    @GET("/cosmos/auth/v1beta1/accounts/{address}")
-    fun getUser(
-        @Path("address") address: String
-    ): Call<APIReturn.AccountReturn>
-}
