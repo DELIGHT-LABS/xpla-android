@@ -11,11 +11,13 @@ import java.net.MalformedURLException
 import java.net.URL
 
 typealias APIParams = HashMap<String, String>?
+
 interface Network {
     val url: String
     val chainId: String
 }
-enum class XplaNetwork: Network {
+
+enum class XplaNetwork : Network {
     TestNet {
         override val url: String
             get() = "https://cube-lcd.xpla.dev"
@@ -27,10 +29,9 @@ enum class XplaNetwork: Network {
             get() = "https://dimension-lcd.xpla.dev"
         override val chainId: String
             get() = "dimension_37-1"
-
     }
-
 }
+
 enum class HttpMethod {
     PUT,
     POST,
@@ -47,32 +48,34 @@ class APIRequester(private val network: XplaNetwork) {
         return baseUrl.resolve(endpoint).toURL()
     }
 
-
-
-    inline fun <reified T> request(httpMethod: HttpMethod, endpoint: String, param: APIParams = null): T? {
-        var c: HttpURLConnection? = null
-        try {
-            c = buildURL(endpoint).openConnection() as HttpURLConnection
-            c.requestMethod = httpMethod.toString()
-            c.setRequestProperty("Content-Type", "application/json")
+    inline fun <reified T> request(
+        httpMethod: HttpMethod,
+        endpoint: String,
+        param: APIParams = null
+    ): T? {
+        val httpURLConnection: HttpURLConnection =
+            buildURL(endpoint).openConnection() as HttpURLConnection
+        runCatching {
+            httpURLConnection.requestMethod = httpMethod.toString()
+            httpURLConnection.setRequestProperty("Content-Type", "application/json")
 
             if (param != null && httpMethod == HttpMethod.POST) {
                 // 서버에서 온 데이터를 출력할 수 있는 상태인지
-                c.doOutput = true
+                httpURLConnection.doOutput = true
 
                 // HashMap을 JSON 문자열로 변환
                 val jsonInputString = gson.toJson(param)
 
-                OutputStreamWriter(c.outputStream, "UTF-8").use { writer ->
+                OutputStreamWriter(httpURLConnection.outputStream, "UTF-8").use { writer ->
                     writer.write(jsonInputString)
                     writer.flush()
                 }
             }
-
-            c.connect()
-            when (c.responseCode) {
+            httpURLConnection.connect()
+        }.onSuccess {
+            when (httpURLConnection.responseCode) {
                 200, 201 -> {
-                    val br = BufferedReader(InputStreamReader(c.inputStream))
+                    val br = BufferedReader(InputStreamReader(httpURLConnection.inputStream))
                     val sb = StringBuilder()
                     var output: String?
                     while (br.readLine().also { output = it } != null) {
@@ -81,23 +84,23 @@ class APIRequester(private val network: XplaNetwork) {
                     return gson.fromJson(sb.toString(), T::class.java)
                 }
             }
-        } catch (ex: MalformedURLException) {
-            Log.d(javaClass.name, ex.toString() )
-            throw ex
-        } catch (ex: IOException) {
-            Log.d(javaClass.name, ex.toString() )
-            throw ex
-        } finally {
-            if (c != null) {
-                try {
-                    c.disconnect()
-                } catch (ex: Exception) {
-                    throw ex
+        }.onFailure {
+            when (it) {
+                is MalformedURLException -> {
+                    Log.d(javaClass.name, it.toString())
+                    throw it
+                }
+
+                is IOException -> {
+                    Log.d(javaClass.name, it.toString())
+                    throw it
                 }
             }
-        }
+        }.also {
+            runCatching { httpURLConnection.disconnect() }.onFailure {
+                throw it
+            }
+        }.getOrThrow()
         return null
     }
-
-
 }

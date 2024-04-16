@@ -20,7 +20,19 @@ import io.delightlabs.xplaandroid.CreateTxOptions
 import io.delightlabs.xplaandroid.LCDClient
 import io.delightlabs.xplaandroid.PubkeyProtoType
 
-class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) {
+enum class BroadcastMode {
+    BROADCAST_MODE_SYNC,
+    BROADCAST_MODE_BLOCK,
+    BROADCAST_MODE_ASYNC
+}
+
+data class SignerOptions(
+    val address: String?,
+    val sequenceNumber: Int?,
+    val publicKey: String?
+)
+
+class TxAPI(private val lcdClient: LCDClient) {
 
     private val apiRequester = lcdClient.apiRequester
 
@@ -30,18 +42,6 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
         this.payer = ""
         this.granter = ""
     }
-
-    enum class BroadcastMode {
-        BROADCAST_MODE_SYNC,
-        BROADCAST_MODE_BLOCK,
-        BROADCAST_MODE_ASYNC
-    }
-
-    data class SignerOptions(
-        val address: String?,
-        val sequenceNumber: Int?,
-        val publicKey: String?
-    )
 
     @OptIn(ExperimentalStdlibApi::class)
     fun create(
@@ -86,7 +86,7 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
                 }
             }
         }
-        fee = estimateFee( signerDatas, options )
+        fee = estimateFee(signerDatas, options)
 
         if (msgs.isEmpty()) {
             return tx {
@@ -242,7 +242,8 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
         val simulateTx = apiRequester.request<APIReturn.SimulateTx>(
             HttpMethod.POST,
             Endpoint.Simulate().path,
-            params)
+            params
+        )
         val gasUsed = simulateTx?.gasInfo?.gasUsed?.toInt() ?: 1
         return gasAdjustment * gasUsed
     }
@@ -257,7 +258,8 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
         return apiRequester.request<APIReturn.BroadcastResponse>(
             HttpMethod.POST,
             Endpoint.Broadcast().path,
-            params)
+            params
+        )
     }
 
     private fun Tx.appendEmptySignatures(signers: List<SignerInfo>): Tx {

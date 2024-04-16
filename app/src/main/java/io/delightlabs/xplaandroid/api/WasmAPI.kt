@@ -2,7 +2,7 @@ package io.delightlabs.xplaandroid.api
 
 import android.util.Base64
 
-class WasmAPI(private val apiRequester: APIRequester): BaseAPI(apiRequester) {
+class WasmAPI(private val apiRequester: APIRequester) {
 
     fun contractQuery(
         contractAddr: String,

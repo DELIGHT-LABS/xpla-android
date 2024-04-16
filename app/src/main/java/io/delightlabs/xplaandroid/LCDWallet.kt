@@ -1,5 +1,6 @@
 package io.delightlabs.xplaandroid
 
+//import io.delightlabs.xplaandroid.Extension.getAsGoogleProto
 import com.google.protobuf.any
 import com.google.protobuf.kotlin.toByteString
 import cosmos.base.v1beta1.CoinOuterClass.Coin
@@ -11,9 +12,8 @@ import cosmos.tx.v1beta1.authInfo
 import cosmos.tx.v1beta1.modeInfo
 import cosmos.tx.v1beta1.signDoc
 import cosmos.tx.v1beta1.signerInfo
-//import io.delightlabs.xplaandroid.Extension.getAsGoogleProto
 import io.delightlabs.xplaandroid.api.APIReturn
-import io.delightlabs.xplaandroid.api.TxAPI
+import io.delightlabs.xplaandroid.api.SignerOptions
 import io.delightlabs.xplaandroid.core.SegwitAddrCoder
 import wallet.core.jni.Curve
 import wallet.core.jni.HDWallet
@@ -88,7 +88,7 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
     fun createTx(options: CreateTxOptions): TxOuterClass.Tx {
         val tx = lcdClient.txAPI.create(
             listOf(
-                TxAPI.SignerOptions(
+                SignerOptions(
                     address = address,
                     sequenceNumber = options.sequence,
                     publicKey = publicKey.data().toHexString()
@@ -98,6 +98,7 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
         )
         return tx
     }
+
     fun createAndSignTx(
         options: CreateTxOptions,
         accountNumber: Int? = null
@@ -118,20 +119,20 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
                 val signOptions = SignOptions(accountNumber, sequence, lcdClient.network.chainId)
                 val authInfo = createAuthInfo(it.toLong(), tx.authInfo.fee)
                 getSignature(tx, authInfo, signOptions)?.let {
-                   return cosmos.tx.v1beta1.tx {
-                       this.signatures.add(it.toByteString())
-                       this.authInfo = authInfo
-                       this.body = tx.body
-                   }
+                    return cosmos.tx.v1beta1.tx {
+                        signatures.add(it.toByteString())
+                        this.authInfo = authInfo
+                        body = tx.body
+                    }
                 }
             }
         }
-        return cosmos.tx.v1beta1.tx {  }
+        return cosmos.tx.v1beta1.tx { }
     }
 
     private fun createAuthInfo(sequence: Long, fee: Fee): AuthInfo {
         return authInfo {
-            this.signerInfos.add(
+            signerInfos.add(
                 signerInfo {
                     this.sequence = sequence
                     this.publicKey = publicKey.getAsGoogleProto()
@@ -146,12 +147,16 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
         }
     }
 
-    private fun getSignature(tx: TxOuterClass.Tx, authInfo: AuthInfo, options: SignOptions): ByteArray? {
+    private fun getSignature(
+        tx: TxOuterClass.Tx,
+        authInfo: AuthInfo,
+        options: SignOptions
+    ): ByteArray? {
         val signDoc = signDoc {
-            this.chainId = options.chainInt
-            this.accountNumber = options.accountNumber!!.toLong()
-            this.bodyBytes = tx.body.toByteString()
-            this.authInfoBytes = authInfo.toByteString()
+            chainId = options.chainInt
+            accountNumber = options.accountNumber!!.toLong()
+            bodyBytes = tx.body.toByteString()
+            authInfoBytes = authInfo.toByteString()
         }
 
         privateKey.sign(keccak256(signDoc.toByteArray()), Curve.SECP256K1)?.let {
@@ -164,8 +169,8 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
     fun com.google.protobuf.Any.getAsGoogleProto(): com.google.protobuf.Any {
         return any {
             val hex = "0a21"
-            this.value = "${hex}${publicKey.data().toHexString()}".hexToByteArray().toByteString()
-            this.typeUrl = PubkeyProtoType
+            value = "${hex}${publicKey.data().toHexString()}".hexToByteArray().toByteString()
+            typeUrl = PubkeyProtoType
         }
     }
 }
