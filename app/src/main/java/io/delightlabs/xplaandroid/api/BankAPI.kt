@@ -1,8 +1,8 @@
 package io.delightlabs.xplaandroid.api
 
-class BankAPI(private val apiRequester: APIRequester): BaseAPI(apiRequester) {
+class BankAPI(private val apiRequester: APIRequester) {
 
-    fun balance (
+    fun balance(
         address: String,
         params: APIParams = hashMapOf()
     ): APIReturn.BalanceReturn? {
@@ -10,10 +10,11 @@ class BankAPI(private val apiRequester: APIRequester): BaseAPI(apiRequester) {
         return apiRequester.request<APIReturn.BalanceReturn>(
             HttpMethod.GET,
             Endpoint.Balance(address).path,
-            params)
+            params
+        )
     }
 
-    fun balance (
+    fun balance(
         address: String,
         pageOptions: PaginationOptions?
     ): APIReturn.BalanceReturn? {
@@ -21,7 +22,8 @@ class BankAPI(private val apiRequester: APIRequester): BaseAPI(apiRequester) {
         return apiRequester.request<APIReturn.BalanceReturn>(
             HttpMethod.GET,
             Endpoint.Balance(address).path,
-            pageOptions?.dictionary)
+            pageOptions?.dictionary
+        )
     }
 
     fun balanceByDenom(
@@ -33,27 +35,30 @@ class BankAPI(private val apiRequester: APIRequester): BaseAPI(apiRequester) {
         return apiRequester.request<APIReturn.Balance>(
             HttpMethod.GET,
             Endpoint.BalanceByDenom(address, denom).path,
-            params)
+            params
+        )
     }
 
-    fun total (
+    fun total(
         params: APIParams = hashMapOf()
     ): APIReturn.TotalReturn? {
 
         return apiRequester.request<APIReturn.TotalReturn>(
             HttpMethod.GET,
             Endpoint.BankTotal().path,
-            params)
+            params
+        )
     }
 
-    fun total (
+    fun total(
         pageOptions: PaginationOptions?
     ): APIReturn.TotalReturn? {
 
         return apiRequester.request<APIReturn.TotalReturn>(
             HttpMethod.GET,
             Endpoint.BankTotal().path,
-            pageOptions?.dictionary)
+            pageOptions?.dictionary
+        )
     }
 
 }

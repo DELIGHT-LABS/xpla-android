@@ -27,6 +27,5 @@ data class PaginationOptions(
         }
 }
 
-
-open class BaseAPI (private val apiRequester: APIRequester){
+open class BaseAPI(private val apiRequester: APIRequester) {
 }
