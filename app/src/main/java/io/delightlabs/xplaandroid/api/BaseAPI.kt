@@ -26,6 +26,3 @@ data class PaginationOptions(
             return dic
         }
 }
-
-open class BaseAPI(private val apiRequester: APIRequester) {
-}
