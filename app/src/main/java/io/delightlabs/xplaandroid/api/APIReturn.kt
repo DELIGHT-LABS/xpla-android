@@ -6,44 +6,44 @@ class APIReturn {
 
     // MARK: - TotalReturn
     data class TotalReturn (
-        var supply: List<Balance>,
-        var pagination: Pagination
+        val supply: List<Balance>,
+        val pagination: Pagination
     )
     data class BalanceReturn (
-        var balances: List<Balance>,
-        var pagination: Pagination
+        val balances: List<Balance>,
+        val pagination: Pagination
     )
     data class Balance (
-        var denom: String,
-        var amount: String,
+        val denom: String,
+        val amount: String,
     )
 
     data class Pagination (
         @SerializedName("next_key")
-        var nextKey : String?,
-        var total: String,
+        val nextKey : String?,
+        val total: String,
     )
 
     data class AccountReturn(
-        var account: Account
+        val account: Account
     )
 
     data class Account(
         @SerializedName("@type")
-        var type: String,
+        val type: String,
         @SerializedName("base_account")
-        var baseAccount: BaseAccount,
+        val baseAccount: BaseAccount,
         @SerializedName("code_hash")
-        var codeHash: String
+        val codeHash: String
     )
 
     data class BaseAccount(
-        var address: String,
+        val address: String,
         @SerializedName("pub_key")
-        var pubKey: PubKey,
+        val pubKey: PubKey,
         @SerializedName("account_number")
-        var accountNumber: String,
-        var sequence: String
+        val accountNumber: String,
+        val sequence: String
     ) {
         fun getSequenceNumber(): String {
             return sequence
@@ -56,39 +56,39 @@ class APIReturn {
 
     data class PubKey(
         @SerializedName("@type")
-        var type: String,
-        var key: String
+        val type: String,
+        val key: String
     )
     data class SmartQuery(
-        var data: DataClass
+        val data: DataClass
     )
     data class DataClass(
-        var pairs: List<Pair>
+        val pairs: List<Pair>
     )
 
     data class Pair(
         @SerializedName("asset_infos")
-        var assetInfos: List<AssetInfo>,
+        val assetInfos: List<AssetInfo>,
         @SerializedName("contract_addr")
-        var contractAddr: String,
+        val contractAddr: String,
         @SerializedName("liquidity_token")
-        var liquidityToken: String,
+        val liquidityToken: String,
         @SerializedName("asset_decimals")
-        var assetDecimasl: List<Int>,
+        val assetDecimasl: List<Int>,
     )
 
     data class AssetInfo(
-        var token: Token?,
+        val token: Token?,
         @SerializedName("native_token")
-        var navtiveToken: NativeToken?
+        val navtiveToken: NativeToken?
     )
 
     data class NativeToken(
-        var denom: String
+        val denom: String
     )
     data class Token(
         @SerializedName("contract_addr")
-        var contractAddr: String
+        val contractAddr: String
     )
 
     data class BroadcastResponse(
@@ -129,7 +129,7 @@ class APIReturn {
     data class LogClass(
         val events: List<EventClass>,
         val log: String,
-        var msgIndex: Int
+        val msgIndex: Int
     )
 
     data class Transaction(

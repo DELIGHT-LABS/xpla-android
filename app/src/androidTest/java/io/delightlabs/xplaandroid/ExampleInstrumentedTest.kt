@@ -1,12 +1,13 @@
 package io.delightlabs.xplaandroid
 
-import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.gson.Gson
 import com.google.protobuf.Any
 import cosmos.bank.v1beta1.msgSend
 import cosmos.base.v1beta1.CoinOuterClass.Coin
+import io.delightlabs.xplaandroid.api.APIRequester
 import io.delightlabs.xplaandroid.api.APIReturn
+import io.delightlabs.xplaandroid.api.HttpMethod
 import io.delightlabs.xplaandroid.api.XplaNetwork
 import org.junit.Assert.*
 import org.junit.Test
@@ -43,7 +44,7 @@ class ExampleInstrumentedTest {
     @Test
     fun lcdAuth() {
         val response: APIReturn.Account? = lcd.authAPI.accountInfo("xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9")
-        response?.baseAccount?.let { Log.d("response", it.getPublicKey()) }
+        response?.baseAccount?.let { println("public address: ${it.address}") }
     }
 
     data class Query(val pairs: Pairs)
@@ -53,8 +54,26 @@ class ExampleInstrumentedTest {
         val query = Query(Pairs(20))
         val gson = Gson()
         val json = gson.toJson(query)
-        val response: APIReturn.SmartQuery? = lcd.wasmAPI.contractQuery("xpla1j4kgjl6h4rt96uddtzdxdu39h0mhn4vrtydufdrk4uxxnrpsnw2qug2yx2", json.toString())
-        response?.let { Log.d("response",""+it.data.pairs[0]) }
+        val response: APIReturn.SmartQuery?
+            = lcd.wasmAPI.contractQuery(
+            "xpla1j4kgjl6h4rt96uddtzdxdu39h0mhn4vrtydufdrk4uxxnrpsnw2qug2yx2",
+            json.toString())
+        response?.let {  println("wasm smartQuery:: ${it.data.pairs[0]}") }
+    }
+
+    @Test
+    fun balanceAPI() {
+        val response: APIReturn.BalanceReturn? = lcd.bankAPI.balance("xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9")
+        response?.let { println("balance response: $response") }
+    }
+
+    @Test
+    fun networkTest(){
+        val apiRequester = APIRequester(XplaNetwork.TestNet)
+        val result = apiRequester.request<APIReturn.AccountReturn>(HttpMethod.GET, "/cosmos/auth/v1beta1/accounts/xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9")
+        if (result != null) {
+            println("result: $result")
+        }
     }
 
     @Test

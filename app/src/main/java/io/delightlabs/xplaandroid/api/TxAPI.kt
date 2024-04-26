@@ -6,7 +6,6 @@ import com.google.protobuf.ByteString
 import com.google.protobuf.kotlin.toByteString
 import cosmos.base.v1beta1.CoinOuterClass.Coin
 import cosmos.tx.signing.v1beta1.Signing
-import cosmos.tx.v1beta1.TxKt
 import cosmos.tx.v1beta1.TxOuterClass
 import cosmos.tx.v1beta1.TxOuterClass.AuthInfo
 import cosmos.tx.v1beta1.TxOuterClass.SignerInfo
@@ -19,26 +18,23 @@ import cosmos.tx.v1beta1.tx
 import cosmos.tx.v1beta1.txBody
 import io.delightlabs.xplaandroid.CreateTxOptions
 import io.delightlabs.xplaandroid.LCDClient
-import io.delightlabs.xplaandroid.pubkeyProtoType
-import retrofit2.Call
-import retrofit2.http.Body
-import retrofit2.http.POST
+import io.delightlabs.xplaandroid.PubkeyProtoType
 
-interface SimulateAPIService {
-    @POST("cosmos/tx/v1beta1/simulate")
-    fun simultate (
-        @Body params: HashMap<String, kotlin.Any>
-    ): Call<APIReturn.SimulateTx>
+enum class BroadcastMode {
+    BROADCAST_MODE_SYNC,
+    BROADCAST_MODE_BLOCK,
+    BROADCAST_MODE_ASYNC
 }
-interface BroadCastAPIService {
-    @POST("/cosmos/tx/v1beta1/txs")
-    fun broadcastTransaction (
-        @Body params: HashMap<String, kotlin.Any>
-    ): Call<APIReturn.BroadcastResponse>
-}
-class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) {
 
-    private val retrofit = lcdClient.apiRequester
+data class SignerOptions(
+    val address: String?,
+    val sequenceNumber: Int?,
+    val publicKey: String?
+)
+
+class TxAPI(private val lcdClient: LCDClient) {
+
+    private val apiRequester = lcdClient.apiRequester
 
     private val emptyFee = fee {
         this.amount.clear()
@@ -47,23 +43,11 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
         this.granter = ""
     }
 
-    enum class BroadcastMode {
-        BROADCAST_MODE_SYNC,
-        BROADCAST_MODE_BLOCK,
-        BROADCAST_MODE_ASYNC
-    }
-
-    data class SignerOptions(
-        val address: String?,
-        val sequenceNumber: Int?,
-        val publicKey: String?
-    )
-
     @OptIn(ExperimentalStdlibApi::class)
     fun create(
         signers: List<SignerOptions>,
         options: CreateTxOptions
-    ): TxOuterClass.Tx {
+    ): Tx {
         var fee: TxOuterClass.Fee? = null
         val msgs: List<Any> = options.msgs
         val memo = options.memo
@@ -95,21 +79,14 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
                             this.sequence = sequencenum.toLong()
                             this.publicKey = Any.newBuilder()
                                 .setValue("0a21$publicKey".hexToByteArray().toByteString())
-                                .setTypeUrl(pubkeyProtoType)
+                                .setTypeUrl(PubkeyProtoType)
                                 .build()
                         }
                     )
                 }
             }
         }
-
-        if (fee == null) {
-            fee =
-                estimateFee(
-                    signerDatas,
-                    options
-                )
-        }
+        fee = estimateFee(signerDatas, options)
 
         if (msgs.isEmpty()) {
             return tx {
@@ -146,7 +123,7 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
         }
     }
 
-    fun estimateFee(
+    private fun estimateFee(
         signers: List<SignerInfo>,
         options: CreateTxOptions,
     ): TxOuterClass.Fee {
@@ -205,20 +182,14 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
                 }
             }
         }
+        val feeAmount = getCoinAmounts(gasPricesCoins, gas!!)
 
-        if (gas == null) {
-            return emptyFee
-        } else {
-            val feeAmount = getCoinAmounts(gasPricesCoins, gas!!)
-
-            val returnFee = fee {
-                this.amount.clear()
-                feeAmount.let { this.amount.addAll(feeAmount) }
-                this.gasLimit = gas?.toLong() ?: 0
-                this.payer = ""
-                this.granter = ""
-            }
-            return returnFee
+        return fee {
+            this.amount.clear()
+            feeAmount.let { this.amount.addAll(feeAmount) }
+            this.gasLimit = gas?.toLong() ?: 0
+            this.payer = ""
+            this.granter = ""
         }
     }
 
@@ -238,8 +209,8 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
         }
     }
 
-    fun estimateGas(
-        tx: TxOuterClass.Tx,
+    private fun estimateGas(
+        tx: Tx,
         gasAdjustment: Int,
         signers: List<SignerInfo>? = null
     ): Int {
@@ -267,27 +238,35 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
             simTx = simTx.appendEmptySignatures(signers ?: emptyList())
         }
 
-        val simul: SimulateAPIService = retrofit.getInstance().create(SimulateAPIService::class.java)
-        val simulateRes = runAPI(simul.simultate( hashMapOf( "tx_bytes" to Base64.encodeToString(simTx.toByteArray(), 0))))
-        return gasAdjustment * ((simulateRes?.gasInfo?.gasUsed)?.toInt() ?: 1)
+        val params = hashMapOf("tx_bytes" to Base64.encodeToString(simTx.toByteArray(), 0))
+        val simulateTx = apiRequester.request<APIReturn.SimulateTx>(
+            HttpMethod.POST,
+            Endpoint.Simulate().path,
+            params
+        )
+        val gasUsed = simulateTx?.gasInfo?.gasUsed?.toInt() ?: 1
+        return gasAdjustment * gasUsed
     }
 
-    fun broadcast(tx: TxOuterClass.Tx): APIReturn.BroadcastResponse? {
+    fun broadcast(tx: Tx): APIReturn.BroadcastResponse? {
         val encodedTxBytes = Base64.encodeToString(tx.toByteArray(), 0)
-        val params = hashMapOf<String, kotlin.Any>(
+        val params = hashMapOf(
             "tx_bytes" to encodedTxBytes,
-            "mode" to BroadcastMode.BROADCAST_MODE_SYNC
+            "mode" to BroadcastMode.BROADCAST_MODE_SYNC.name
         )
 
-        val transaction: BroadCastAPIService = retrofit.getInstance().create(BroadCastAPIService::class.java)
-        return runAPI(transaction.broadcastTransaction(params))
+        return apiRequester.request<APIReturn.BroadcastResponse>(
+            HttpMethod.POST,
+            Endpoint.Broadcast().path,
+            params
+        )
     }
 
-    fun TxOuterClass.Tx.appendEmptySignatures(signers: List<TxOuterClass.SignerInfo>): TxOuterClass.Tx {
+    private fun Tx.appendEmptySignatures(signers: List<SignerInfo>): Tx {
         val builder = this.toBuilder()
         val authInfo = this.authInfo.toBuilder()
         signers.forEach {
-            val signerInfo: TxOuterClass.SignerInfo = signerInfo {
+            val signerInfo: SignerInfo = signerInfo {
                 this.publicKey = it.publicKey
                 this.sequence = it.sequence
                 this.modeInfo = modeInfo {
@@ -304,5 +283,4 @@ class TxAPI(private val lcdClient: LCDClient) : BaseAPI(lcdClient.apiRequester) 
             .build()
     }
 }
-
 
