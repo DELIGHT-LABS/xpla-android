@@ -42,12 +42,11 @@ data class CreateTxOptions(
 
 @OptIn(ExperimentalStdlibApi::class)
 class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
-    private val lcdClient: LCDClient
+    val lcdClient: LCDClient
     val privateKey: PrivateKey
     val publicKey: PublicKey
     val address: String
     val mnemonic: String
-
     constructor(lcdClient: LCDClient, strength: Int, passphrase: String)
             : this(lcdClient, HDWallet(strength, passphrase)) {
     }
@@ -86,7 +85,7 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
     }
 
     fun createTx(options: CreateTxOptions): TxOuterClass.Tx {
-        val tx = lcdClient.txAPI.create(
+        val tx = txAPI.create(
             listOf(
                 SignerOptions(
                     address = address,
@@ -130,7 +129,7 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
         return cosmos.tx.v1beta1.tx { }
     }
 
-    private fun createAuthInfo(sequence: Long, fee: Fee): AuthInfo {
+    fun createAuthInfo(sequence: Long, fee: Fee): AuthInfo {
         return authInfo {
             signerInfos.add(
                 signerInfo {
@@ -146,8 +145,7 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
             this.fee = fee
         }
     }
-
-    private fun getSignature(
+    fun getSignature(
         tx: TxOuterClass.Tx,
         authInfo: AuthInfo,
         options: SignOptions
@@ -173,4 +171,5 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
             typeUrl = PubkeyProtoType
         }
     }
+
 }
