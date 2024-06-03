@@ -103,7 +103,7 @@ class ExampleInstrumentedTest {
                 CreateTxOptions(msgs = listOf(any))
             )
 
-            val broadcastRes = lcd.txAPI.broadcast(createTx)
+            val broadcastRes = txAPI.broadcast(createTx)
             println("broadcastRes: $broadcastRes")
         }
     }

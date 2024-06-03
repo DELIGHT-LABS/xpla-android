@@ -1,6 +1,6 @@
 package io.delightlabs.xplaandroid.api
 
-class AuthAPI(private val apiRequester: APIRequester) {
+class AuthAPI(val apiRequester: APIRequester) {
 
     fun accountInfo(address: String): APIReturn.Account? {
         return apiRequester.request<APIReturn.AccountReturn>(
