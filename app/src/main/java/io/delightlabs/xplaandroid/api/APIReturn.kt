@@ -59,10 +59,18 @@ class APIReturn {
         val type: String,
         val key: String
     )
-    data class SmartQuery(
-        val data: DataClass
+
+
+    data class ContractBalanceResponse(
+        val data: ContractBalance
     )
-    data class DataClass(
+    data class ContractBalance (
+        val balance: Int
+    )
+    data class PairResponse(
+        val data: PairData
+    )
+    data class PairData(
         val pairs: List<Pair>
     )
 
