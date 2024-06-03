@@ -54,7 +54,7 @@ class ExampleInstrumentedTest {
         val query = Query(Pairs(20))
         val gson = Gson()
         val json = gson.toJson(query)
-        val response: APIReturn.SmartQuery?
+        val response: APIReturn.PairResponse?
             = lcd.wasmAPI.contractQuery(
             "xpla1j4kgjl6h4rt96uddtzdxdu39h0mhn4vrtydufdrk4uxxnrpsnw2qug2yx2",
             json.toString())

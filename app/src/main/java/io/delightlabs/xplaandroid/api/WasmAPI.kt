@@ -2,15 +2,17 @@ package io.delightlabs.xplaandroid.api
 
 import android.util.Base64
 
-class WasmAPI(private val apiRequester: APIRequester) {
+class WasmAPI(val apiRequester: APIRequester) {
 
-    fun contractQuery(
+    inline fun <reified T> contractQuery(
         contractAddr: String,
         queryJson: String
-    ): APIReturn.SmartQuery? {
+    ):T? {
         val encodedString: String = Base64.encodeToString(queryJson.toByteArray(), 0)
-        return apiRequester.request<APIReturn.SmartQuery>(
+        return apiRequester.request<T>(
             HttpMethod.GET,
             Endpoint.SmartQuery(contractAddr, encodedString.trim()).path)
     }
+
+
 }
