@@ -40,23 +40,37 @@ data class CreateTxOptions(
     var sequence: Int? = null
 )
 
+val derivationPath = "m/44\'/60\'/0\'/0/0"
 @OptIn(ExperimentalStdlibApi::class)
-class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
+class LCDWallet(lcdClient: LCDClient, privateKey: PrivateKey, mnemonic: String) {
     val lcdClient: LCDClient
     val privateKey: PrivateKey
     val publicKey: PublicKey
     val address: String
     val mnemonic: String
     constructor(lcdClient: LCDClient, strength: Int, passphrase: String)
-            : this(lcdClient, HDWallet(strength, passphrase)) {
+            : this(lcdClient,
+        HDWallet(strength, passphrase).getKeyByCurve(Curve.SECP256K1, derivationPath),
+        HDWallet(strength, passphrase).mnemonic()) {
     }
 
     constructor(lcdClient: LCDClient, mnemonic: String, passphrase: String)
-            : this(lcdClient, HDWallet(mnemonic, passphrase)) {
+            : this(lcdClient,
+        HDWallet(mnemonic, passphrase).getKeyByCurve(Curve.SECP256K1, derivationPath),
+        mnemonic) {
+    }
+
+    constructor(lcdClient: LCDClient, privateKey: PrivateKey)
+            : this(lcdClient, privateKey, "") {
+        val publicKeyData = privateKey.getPublicKeySecp256k1(false)
+        val hex = publicKeyData.data().toHexString(1)
+        val x1 = keccak256(hex.hexToByteArray()).toHexString()
+        val x2 = x1.slice(24..<x1.length)
+        val xplaAddress = SegwitAddrCoder().encode2("xpla", x2.hexToByteArray())
+
     }
 
     init {
-        val privateKey = hdWallet.getKeyByCurve(Curve.SECP256K1, "m/44\'/60\'/0\'/0/0")
         val publicKeyData = privateKey.getPublicKeySecp256k1(false)
         val hex = publicKeyData.data().toHexString(1)
         val x1 = keccak256(hex.hexToByteArray()).toHexString()
@@ -66,7 +80,7 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
         this.privateKey = privateKey
         this.publicKey = privateKey.getPublicKeySecp256k1(true)
         this.address = xplaAddress
-        this.mnemonic = hdWallet.mnemonic()
+        this.mnemonic = mnemonic
         this.lcdClient = lcdClient
     }
 

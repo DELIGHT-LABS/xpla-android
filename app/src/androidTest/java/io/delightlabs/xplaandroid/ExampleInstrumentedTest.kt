@@ -12,6 +12,7 @@ import io.delightlabs.xplaandroid.api.XplaNetwork
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
+import wallet.core.jni.PrivateKey
 
 
 /**
@@ -38,6 +39,9 @@ class ExampleInstrumentedTest {
     fun lcdWallet(){
         val seedPhrase = "table dinner sibling crisp hen genuine wing volume sport north omit cushion struggle script dinosaur merge medal visa also mixture faint surge boy wild"
         val wallet = lcd.wallet(seedPhrase)
+        print(wallet.privateKey)
+        val wallet2 = lcd.wallet(PrivateKey(wallet.privateKey.data()))
+        print(wallet2.address)
         assertEquals("xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9", wallet.address)
     }
 
