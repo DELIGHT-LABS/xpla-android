@@ -1,5 +1,6 @@
 package io.delightlabs.xplaandroid
 
+import com.google.gson.Gson
 import com.google.protobuf.any
 import com.google.protobuf.kotlin.toByteString
 import cosmos.base.v1beta1.CoinOuterClass.Coin
@@ -15,6 +16,7 @@ import cosmos.tx.v1beta1.signerInfo
 import io.delightlabs.xplaandroid.api.APIReturn
 import io.delightlabs.xplaandroid.api.SignerOptions
 import io.delightlabs.xplaandroid.core.SegwitAddrCoder
+import io.delightlabs.xplaandroid.core.StdSignDoc
 import wallet.core.jni.Curve
 import wallet.core.jni.HDWallet
 import wallet.core.jni.Hash.keccak256
@@ -25,7 +27,8 @@ import wallet.core.jni.PublicKey
 data class SignOptions(
     val accountNumber: Int?,
     val sequence: Int?,
-    val chainInt: String
+    val chainId: String,
+    val signMode: Signing.SignMode
 )
 
 data class CreateTxOptions(
@@ -101,7 +104,8 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
 
     fun createAndSignTx(
         options: CreateTxOptions,
-        accountNumber: Int? = null
+        accountNumber: Int? = null,
+        signMode: Signing.SignMode = Signing.SignMode.SIGN_MODE_DIRECT
     ): Tx {
         var accountNumber = accountNumber
         var sequence = options.sequence
@@ -116,8 +120,8 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
         val tx = createTx(options)
         accountNumber?.let {
             sequence?.let {
-                val signOptions = SignOptions(accountNumber, sequence, lcdClient.network.chainId)
-                val authInfo = createAuthInfo(it.toLong(), tx.authInfo.fee)
+                val signOptions = SignOptions(accountNumber, sequence, lcdClient.network.chainId, signMode)
+                val authInfo = createAuthInfo(it.toLong(), tx.authInfo.fee, signOptions)
                 getSignature(tx, authInfo, signOptions)?.let {
                     return cosmos.tx.v1beta1.tx {
                         signatures.add(it.toByteString())
@@ -130,7 +134,7 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
         return cosmos.tx.v1beta1.tx { }
     }
 
-    private fun createAuthInfo(sequence: Long, fee: Fee): AuthInfo {
+    private fun createAuthInfo(sequence: Long, fee: Fee, signOptions: SignOptions): AuthInfo {
         return authInfo {
             signerInfos.add(
                 signerInfo {
@@ -138,7 +142,7 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
                     this.publicKey = publicKey.getAsGoogleProto()
                     this.modeInfo = modeInfo {
                         this.single = TxOuterClass.ModeInfo.Single.newBuilder()
-                            .setMode(Signing.SignMode.SIGN_MODE_DIRECT)
+                            .setMode(signOptions.signMode)
                             .build()
                     }
                 }
@@ -153,13 +157,22 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
         options: SignOptions
     ): ByteArray? {
         val signDoc = signDoc {
-            chainId = options.chainInt
+            chainId = options.chainId
             accountNumber = options.accountNumber!!.toLong()
             bodyBytes = tx.body.toByteString()
             authInfoBytes = authInfo.toByteString()
         }
 
-        privateKey.sign(keccak256(signDoc.toByteArray()), Curve.SECP256K1)?.let {
+        val signDocSerialized: ByteArray
+        if(options.signMode == Signing.SignMode.SIGN_MODE_LEGACY_AMINO_JSON) {
+            val stdSignDoc = StdSignDoc(signDoc)
+            signDocSerialized = Gson().toJson(stdSignDoc).toByteArray()
+            println(Gson().toJson(stdSignDoc))
+        } else {
+            signDocSerialized = signDoc.toByteArray()
+        }
+
+        privateKey.sign(keccak256(signDocSerialized), Curve.SECP256K1)?.let {
             return it
         }
         return null
