@@ -1,6 +1,5 @@
 package io.delightlabs.xplaandroid
 
-//import io.delightlabs.xplaandroid.Extension.getAsGoogleProto
 import com.google.protobuf.any
 import com.google.protobuf.kotlin.toByteString
 import cosmos.base.v1beta1.CoinOuterClass.Coin
@@ -8,6 +7,7 @@ import cosmos.tx.signing.v1beta1.Signing
 import cosmos.tx.v1beta1.TxOuterClass
 import cosmos.tx.v1beta1.TxOuterClass.AuthInfo
 import cosmos.tx.v1beta1.TxOuterClass.Fee
+import cosmos.tx.v1beta1.TxOuterClass.Tx
 import cosmos.tx.v1beta1.authInfo
 import cosmos.tx.v1beta1.modeInfo
 import cosmos.tx.v1beta1.signDoc
@@ -114,7 +114,7 @@ class LCDWallet(lcdClient: LCDClient, privateKey: PrivateKey, mnemonic: String) 
     fun createAndSignTx(
         options: CreateTxOptions,
         accountNumber: Int? = null
-    ): cosmos.tx.v1beta1.TxOuterClass.Tx {
+    ): Tx {
         var accountNumber = accountNumber
         var sequence = options.sequence
 
@@ -158,8 +158,9 @@ class LCDWallet(lcdClient: LCDClient, privateKey: PrivateKey, mnemonic: String) 
             this.fee = fee
         }
     }
-    fun getSignature(
-        tx: TxOuterClass.Tx,
+
+    private fun getSignature(
+        tx: Tx,
         authInfo: AuthInfo,
         options: SignOptions
     ): ByteArray? {
@@ -171,8 +172,7 @@ class LCDWallet(lcdClient: LCDClient, privateKey: PrivateKey, mnemonic: String) 
         }
 
         privateKey.sign(keccak256(signDoc.toByteArray()), Curve.SECP256K1)?.let {
-            val sig = it.dropLast(1) // .map { it.toUByte() }
-            return sig.toByteArray()
+            return it
         }
         return null
     }

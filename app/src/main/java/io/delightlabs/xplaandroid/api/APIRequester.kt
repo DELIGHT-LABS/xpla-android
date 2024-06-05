@@ -29,7 +29,14 @@ enum class XplaNetwork : Network {
             get() = "https://dimension-lcd.xpla.dev"
         override val chainId: String
             get() = "dimension_37-1"
+    },
+    LocalNet {
+        override val url: String
+            get() = "http://localhost:1317"
+        override val chainId: String
+            get() = "n_1-1"
     }
+
 }
 
 enum class HttpMethod {
