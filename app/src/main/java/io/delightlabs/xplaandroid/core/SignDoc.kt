@@ -1,9 +1,7 @@
 package io.delightlabs.xplaandroid.core
 
 import com.google.gson.annotations.SerializedName
-import cosmos.tx.v1beta1.TxOuterClass
 import cosmos.tx.v1beta1.TxOuterClass.AuthInfo
-import cosmos.tx.v1beta1.TxOuterClass.AuthInfoOrBuilder
 import cosmos.tx.v1beta1.TxOuterClass.SignDoc
 import cosmos.tx.v1beta1.TxOuterClass.TxBody
 import io.delightlabs.xplaandroid.amino.AminoMsg
@@ -34,7 +32,7 @@ data class StdSignDoc(
 
         AuthInfo.parseFrom(signDoc.authInfoBytes).let {
             this.sequence = it.signerInfosList[0].sequence.toString()
-            this.fee = StdFee(fee = it.fee)
+            this.fee = StdFee(fee = it.fee, chainID = signDoc.chainId)
         }
 
         TxBody.parseFrom(signDoc.bodyBytes).let {
