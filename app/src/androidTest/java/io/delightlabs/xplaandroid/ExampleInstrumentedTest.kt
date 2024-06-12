@@ -2,11 +2,14 @@ package io.delightlabs.xplaandroid
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.google.protobuf.Any
+import com.google.protobuf.ByteString
 import cosmos.bank.v1beta1.msgSend
 import cosmos.base.v1beta1.CoinOuterClass.Coin
 import cosmos.tx.signing.v1beta1.Signing.SignMode
 import cosmos.tx.v1beta1.TxOuterClass.Fee
+import cosmwasm.wasm.v1.msgExecuteContract
 import io.delightlabs.xplaandroid.api.APIRequester
 import io.delightlabs.xplaandroid.api.APIReturn
 import io.delightlabs.xplaandroid.api.HttpMethod
@@ -111,7 +114,7 @@ class ExampleInstrumentedTest {
     }
 
     @Test
-    fun testSign() {
+    fun testSignCosmosMsg() {
         val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
         val lcd = LCDClient(
             XplaNetwork.LocalNet,
@@ -261,6 +264,53 @@ class ExampleInstrumentedTest {
             )
 
             assertEquals("1WW5WdDSn/7DAImtpZxgggTMcWoQrxqGHUGyQUpuCFcsMEgAl3Vxgteye4DSyxVzlM5imp3eRp/UJsPYgnn/5AE=", java.util.Base64.getEncoder().encodeToString(createTx.getSignatures(0).toByteArray()) )
+            createTx.getSignatures(0)
+        }
+    }
+
+    @Test
+    fun testSignAminoContractMsg() {
+        val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
+        val lcd = LCDClient(
+            XplaNetwork.LocalNet,
+            gasAdjustment = "1",
+            gasPrices = listOf()
+        )
+
+        lcd.wallet(mnemonic = seedPhrase).let {
+            val feeCoin = Coin.newBuilder()
+                .setAmount("1")
+                .setDenom("axpla")
+                .build()
+
+            val transferMsg = """{
+                "transfer": {
+                    "amount": "1",
+                "recipient": "xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9"
+            }
+            }""".toByteArray()
+
+            val msgExecute = msgExecuteContract {
+                this.sender = "xpla1nns26tapuzt36vdz0aadk7svm8p6xndtmwlyg8"
+                this.contract = "xpla14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s525s0h"
+                this.msg = ByteString.copyFrom(transferMsg)
+            }
+
+            val msg = Any.newBuilder()
+                .setTypeUrl("/cosmwasm.wasm.v1.MsgExecuteContract")
+                .setValue(msgExecute.toByteString())
+                .build()
+
+            val createTx = it.createAndSignTx(
+                CreateTxOptions(
+                    msgs = listOf(msg),
+                    fee = Fee.newBuilder().addAmount(0, feeCoin).setGasLimit(200000).build(),
+                    sequence = 8),
+                accountNumber = 0,
+                signMode = SignMode.SIGN_MODE_LEGACY_AMINO_JSON
+            )
+
+            assertEquals("uuuGzlHcidASzxYRUtfldCjkPSq/YHUdPmUDl1Tl591a52zGqgniKLUSgzUEBUF+SetkcRtXOGJrB2bbXBUQ4QE=", java.util.Base64.getEncoder().encodeToString(createTx.getSignatures(0).toByteArray()) )
             createTx.getSignatures(0)
         }
     }

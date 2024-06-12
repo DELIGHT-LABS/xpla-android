@@ -167,7 +167,6 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
         if(options.signMode == Signing.SignMode.SIGN_MODE_LEGACY_AMINO_JSON) {
             val stdSignDoc = StdSignDoc(signDoc)
             signDocSerialized = Gson().toJson(stdSignDoc).toByteArray()
-            println(Gson().toJson(stdSignDoc))
         } else {
             signDocSerialized = signDoc.toByteArray()
         }
