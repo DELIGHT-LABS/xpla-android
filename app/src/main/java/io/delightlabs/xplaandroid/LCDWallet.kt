@@ -50,8 +50,13 @@ class LCDWallet(lcdClient: LCDClient, privateKey: PrivateKey, mnemonic: String) 
     val mnemonic: String
     constructor(lcdClient: LCDClient, strength: Int, passphrase: String)
             : this(lcdClient,
-        HDWallet(strength, passphrase).getKeyByCurve(Curve.SECP256K1, derivationPath),
-        HDWallet(strength, passphrase).mnemonic()) {
+                    HDWallet(strength, passphrase)) {
+    }
+
+    constructor(lcdClient: LCDClient, hdWallet: HDWallet)
+            : this(lcdClient,
+        hdWallet.getKeyByCurve(Curve.SECP256K1, derivationPath),
+        hdWallet.mnemonic()){
     }
 
     constructor(lcdClient: LCDClient, mnemonic: String, passphrase: String)
@@ -62,12 +67,6 @@ class LCDWallet(lcdClient: LCDClient, privateKey: PrivateKey, mnemonic: String) 
 
     constructor(lcdClient: LCDClient, privateKey: PrivateKey)
             : this(lcdClient, privateKey, "") {
-        val publicKeyData = privateKey.getPublicKeySecp256k1(false)
-        val hex = publicKeyData.data().toHexString(1)
-        val x1 = keccak256(hex.hexToByteArray()).toHexString()
-        val x2 = x1.slice(24..<x1.length)
-        val xplaAddress = SegwitAddrCoder().encode2("xpla", x2.hexToByteArray())
-
     }
 
     init {
