@@ -22,6 +22,7 @@ class LCDClient(
     var authAPI: AuthAPI = AuthAPI(apiRequester)
     var bankAPI: BankAPI = BankAPI(apiRequester)
     var wasmAPI: WasmAPI = WasmAPI(apiRequester)
+    var txAPI: TxAPI = TxAPI(this)
     fun wallet(strength: Int, passphrase: String): LCDWallet {
         System.loadLibrary("TrustWalletCore")
         return LCDWallet(this, strength, passphrase)
