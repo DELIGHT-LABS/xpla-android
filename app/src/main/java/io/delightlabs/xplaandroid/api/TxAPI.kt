@@ -123,7 +123,7 @@ class TxAPI(private val lcdClient: LCDClient) {
         }
     }
 
-    private fun estimateFee(
+    fun estimateFee(
         signers: List<SignerInfo>,
         options: CreateTxOptions,
     ): TxOuterClass.Fee {
@@ -282,5 +282,5 @@ class TxAPI(private val lcdClient: LCDClient) {
             .setAuthInfo(authInfo.build())
             .build()
     }
-}
 
+}

@@ -40,24 +40,36 @@ data class CreateTxOptions(
     var sequence: Int? = null
 )
 
+val derivationPath = "m/44\'/60\'/0\'/0/0"
 @OptIn(ExperimentalStdlibApi::class)
-class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
-    private val lcdClient: LCDClient
+class LCDWallet(lcdClient: LCDClient, privateKey: PrivateKey, mnemonic: String) {
+    val lcdClient: LCDClient
     val privateKey: PrivateKey
     val publicKey: PublicKey
     val address: String
     val mnemonic: String
-
     constructor(lcdClient: LCDClient, strength: Int, passphrase: String)
-            : this(lcdClient, HDWallet(strength, passphrase)) {
+            : this(lcdClient,
+                    HDWallet(strength, passphrase)) {
+    }
+
+    constructor(lcdClient: LCDClient, hdWallet: HDWallet)
+            : this(lcdClient,
+        hdWallet.getKeyByCurve(Curve.SECP256K1, derivationPath),
+        hdWallet.mnemonic()){
     }
 
     constructor(lcdClient: LCDClient, mnemonic: String, passphrase: String)
-            : this(lcdClient, HDWallet(mnemonic, passphrase)) {
+            : this(lcdClient,
+        HDWallet(mnemonic, passphrase).getKeyByCurve(Curve.SECP256K1, derivationPath),
+        mnemonic) {
+    }
+
+    constructor(lcdClient: LCDClient, privateKey: PrivateKey)
+            : this(lcdClient, privateKey, "") {
     }
 
     init {
-        val privateKey = hdWallet.getKeyByCurve(Curve.SECP256K1, "m/44\'/60\'/0\'/0/0")
         val publicKeyData = privateKey.getPublicKeySecp256k1(false)
         val hex = publicKeyData.data().toHexString(1)
         val x1 = keccak256(hex.hexToByteArray()).toHexString()
@@ -67,7 +79,7 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
         this.privateKey = privateKey
         this.publicKey = privateKey.getPublicKeySecp256k1(true)
         this.address = xplaAddress
-        this.mnemonic = hdWallet.mnemonic()
+        this.mnemonic = mnemonic
         this.lcdClient = lcdClient
     }
 
@@ -86,7 +98,7 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
     }
 
     fun createTx(options: CreateTxOptions): TxOuterClass.Tx {
-        val tx = lcdClient.txAPI.create(
+        val tx = txAPI.create(
             listOf(
                 SignerOptions(
                     address = address,
@@ -130,7 +142,7 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
         return cosmos.tx.v1beta1.tx { }
     }
 
-    private fun createAuthInfo(sequence: Long, fee: Fee): AuthInfo {
+    fun createAuthInfo(sequence: Long, fee: Fee): AuthInfo {
         return authInfo {
             signerInfos.add(
                 signerInfo {
@@ -146,8 +158,7 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
             this.fee = fee
         }
     }
-
-    private fun getSignature(
+    fun getSignature(
         tx: TxOuterClass.Tx,
         authInfo: AuthInfo,
         options: SignOptions
@@ -173,4 +184,5 @@ class LCDWallet(lcdClient: LCDClient, hdWallet: HDWallet) {
             typeUrl = PubkeyProtoType
         }
     }
+
 }
