@@ -25,7 +25,7 @@ import wallet.core.jni.PublicKey
 data class SignOptions(
     val accountNumber: Int?,
     val sequence: Int?,
-    val chainInt: String
+    val chainId: String
 )
 
 data class CreateTxOptions(
@@ -164,7 +164,7 @@ class LCDWallet(lcdClient: LCDClient, privateKey: PrivateKey, mnemonic: String) 
         options: SignOptions
     ): ByteArray? {
         val signDoc = signDoc {
-            chainId = options.chainInt
+            chainId = options.chainId
             accountNumber = options.accountNumber!!.toLong()
             bodyBytes = tx.body.toByteString()
             authInfoBytes = authInfo.toByteString()
