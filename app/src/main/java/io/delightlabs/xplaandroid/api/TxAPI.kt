@@ -1,6 +1,7 @@
 package io.delightlabs.xplaandroid.api
 
 import android.util.Base64
+import android.util.Log
 import com.google.protobuf.Any
 import com.google.protobuf.ByteString
 import com.google.protobuf.kotlin.toByteString
@@ -238,14 +239,20 @@ class TxAPI(private val lcdClient: LCDClient) {
             simTx = simTx.appendEmptySignatures(signers ?: emptyList())
         }
 
-        val params = hashMapOf("tx_bytes" to Base64.encodeToString(simTx.toByteArray(), 0))
-        val simulateTx = apiRequester.request<APIReturn.SimulateTx>(
+        val simulateTx = simulate(simTx)
+
+        val gasUsed = simulateTx?.gasInfo?.gasUsed?.toInt() ?: 1
+        return gasAdjustment * gasUsed
+    }
+
+    fun simulate(tx: Tx): APIReturn.SimulateTx? {
+        val params = hashMapOf("tx_bytes" to Base64.encodeToString(tx.toByteArray(), 0))
+        Log.d("simulate", params.toString())
+        return apiRequester.request<APIReturn.SimulateTx>(
             HttpMethod.POST,
             Endpoint.Simulate().path,
             params
         )
-        val gasUsed = simulateTx?.gasInfo?.gasUsed?.toInt() ?: 1
-        return gasAdjustment * gasUsed
     }
 
     fun broadcast(tx: Tx): APIReturn.BroadcastResponse? {
