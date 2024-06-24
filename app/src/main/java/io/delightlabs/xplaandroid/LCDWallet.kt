@@ -146,7 +146,7 @@ class LCDWallet(lcdClient: LCDClient, privateKey: PrivateKey, mnemonic: String) 
         return cosmos.tx.v1beta1.tx { }
     }
 
-    private fun createAuthInfo(sequence: Long, fee: Fee, signOptions: SignOptions): AuthInfo {
+    public fun createAuthInfo(sequence: Long, fee: Fee, signOptions: SignOptions): AuthInfo {
         return authInfo {
             signerInfos.add(
                 signerInfo {
@@ -163,7 +163,7 @@ class LCDWallet(lcdClient: LCDClient, privateKey: PrivateKey, mnemonic: String) 
         }
     }
 
-    private fun getSignature(
+    public fun getSignature(
         tx: Tx,
         authInfo: AuthInfo,
         options: SignOptions
