@@ -35,7 +35,7 @@ import java.util.Base64
 @RunWith(AndroidJUnit4::class)
 class ExampleInstrumentedTest {
     private val lcd = LCDClient(
-        network = XplaNetwork.TestNet,
+        network = XplaNetwork.Testnet,
         gasAdjustment = "3",
         gasPrices = listOf(CoinOuterClass.Coin.newBuilder().apply {
             this.amount = "850000000000"
@@ -76,11 +76,11 @@ class ExampleInstrumentedTest {
         val query = Query(Pairs(20))
         val gson = Gson()
         val json = gson.toJson(query)
-        val response: APIReturn.PairResponse? = lcd.wasmAPI.contractQuery(
-            "xpla1j4kgjl6h4rt96uddtzdxdu39h0mhn4vrtydufdrk4uxxnrpsnw2qug2yx2",
-            json.toString()
+        val response: APIReturn.TokenInfoResponse? = lcd.wasmAPI.contractQueryTokenInfo(
+            "xpla1w6hv0suf8dmpq8kxd8a6yy9fnmntlh7hh9kl37qmax7kyzfd047qnnp0mm",
         )
-        response?.let { println("wasm smartQuery:: ${it.data.pairs[0]}") }
+        println("wasm smartQuery:: $response")
+        response?.let { println("wasm smartQuery:: ${it.data}") }
     }
 
     @Test
@@ -92,7 +92,7 @@ class ExampleInstrumentedTest {
 
     @Test
     fun networkTest() {
-        val apiRequester = APIRequester(XplaNetwork.TestNet)
+        val apiRequester = APIRequester(XplaNetwork.Testnet)
         val result = apiRequester.request<APIReturn.AccountReturn>(
             HttpMethod.GET,
             "/cosmos/auth/v1beta1/accounts/xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9"
@@ -139,7 +139,7 @@ class ExampleInstrumentedTest {
     fun testSignCosmosMsg() {
         val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
         val lcd = LCDClient(
-            XplaNetwork.LocalNet,
+            XplaNetwork.Localnet,
             gasAdjustment = "1",
             gasPrices = listOf()
         )
@@ -177,7 +177,7 @@ class ExampleInstrumentedTest {
     fun testSignAmino() {
         val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
         val lcd = LCDClient(
-            XplaNetwork.LocalNet,
+            XplaNetwork.Localnet,
             gasAdjustment = "1",
             gasPrices = listOf()
         )
@@ -216,7 +216,7 @@ class ExampleInstrumentedTest {
     fun testSignAminoWithPayer() {
         val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
         val lcd = LCDClient(
-            XplaNetwork.LocalNet,
+            XplaNetwork.Localnet,
             gasAdjustment = "1",
             gasPrices = listOf()
         )
@@ -255,7 +255,7 @@ class ExampleInstrumentedTest {
     fun testSignAminoWithPayerWhenCosmos47() {
         val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
         val lcd = LCDClient(
-            XplaNetwork.TestNet,
+            XplaNetwork.Testnet,
             gasAdjustment = "1",
             gasPrices = listOf()
         )
@@ -294,7 +294,7 @@ class ExampleInstrumentedTest {
     fun testSignAminoContractMsg() {
         val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
         val lcd = LCDClient(
-            XplaNetwork.LocalNet,
+            XplaNetwork.Localnet,
             gasAdjustment = "1",
             gasPrices = listOf()
         )

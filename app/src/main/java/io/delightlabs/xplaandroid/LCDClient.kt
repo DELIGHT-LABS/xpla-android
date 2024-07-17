@@ -44,7 +44,7 @@ val txAPI: TxAPI
     get() {
         if (_txAPI == null) {
             val lcdClient = LCDClient(
-                network = XplaNetwork.TestNet,
+                network = XplaNetwork.Testnet,
                 gasPrices = arrayListOf(
                     coin {
                         this.amount = "850000000000"
