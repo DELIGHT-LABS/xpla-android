@@ -164,4 +164,20 @@ class APIReturn {
         val events: List<EventClass>
     )
 
+
+    data class TokenInfoResponse(
+        val data: TokenInfoResult
+    )
+
+    data class TokenInfoResult(
+        @SerializedName("name")
+        val name: String,
+        @SerializedName("symbol")
+        val symbol: String,
+        @SerializedName("decimals")
+        val decimals: Int,
+        @SerializedName("total_supply")
+        val totalSupply: String,
+    )
+
 }

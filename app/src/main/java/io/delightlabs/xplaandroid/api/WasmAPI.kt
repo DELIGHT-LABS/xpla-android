@@ -7,6 +7,16 @@ import java.net.URLEncoder
 
 class WasmAPI(val apiRequester: APIRequester) {
 
+
+    fun contractQueryTokenInfo(
+        contractAddr: String,
+    ):APIReturn.TokenInfoResponse? {
+        val path = Endpoint.SmartQuery(contractAddr, "eyJ0b2tlbl9pbmZvIjp7fX0=").path
+        return apiRequester.request<APIReturn.TokenInfoResponse>(
+            HttpMethod.GET,
+            path)
+    }
+
     inline fun <reified T> contractQuery(
         contractAddr: String,
         queryJson: String
