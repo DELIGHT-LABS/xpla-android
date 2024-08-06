@@ -336,5 +336,57 @@ class ExampleInstrumentedTest {
             createTx.getSignatures(0)
         }
     }
+
+    @Test
+    fun testSignAminoWithMemo() {
+        val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
+        val lcd = LCDClient(
+            XplaNetwork.Testnet,
+            gasAdjustment = "1.5",
+            gasPrices = listOf()
+        )
+
+        lcd.wallet(mnemonic = seedPhrase).let {
+
+            val sendCoin = Coin.newBuilder()
+                .setAmount("1")
+                .setDenom("axpla")
+                .build()
+
+            val txSend = msgSend {
+                this.toAddress = "xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9"
+                this.fromAddress = "xpla1nns26tapuzt36vdz0aadk7svm8p6xndtmwlyg8"
+                this.amount.add(sendCoin)
+            }
+
+            val msg = Any.newBuilder()
+                .setTypeUrl("/cosmos.bank.v1beta1.MsgSend")
+                .setValue(txSend.toByteString())
+                .build()
+
+            val fee =
+                Fee.newBuilder()
+                    .setGasLimit(200000)
+                    .addAmount(sendCoin)
+                    .build()
+
+            val createTx = it.createAndSignTx(
+                CreateTxOptions(
+                    memo = "U2FsdGVkX18bzNU4JzqtCxkderonQ0mZnkEFoCH/s9Thngscv/0s7hdQsdIzFDVFKK6PPJL1PYcAEfu46EVEjjLTaghGGQj9kncghM5YoV8=",
+
+//                    memo = "test",
+                    msgs = listOf(msg),
+                    fee = fee,
+                    sequence = 1),
+                accountNumber = 8,
+                signMode = SignMode.SIGN_MODE_LEGACY_AMINO_JSON
+            )
+
+            // z/8awwXiFSObxVIHMeIDDy7NRiHPzLYIwAx4AMcehfFZ/VyxlYrILxeXSuSmiO+WacT/C6ApBsoxtzvRzV7O6gA=
+//oVN7JefL5gxLzqO8UOY9R7HjqtQfJxvYLBH955NGG6Ar3JntX8IxbuPnFa6fmEqAJ/NBCyXkBnyd3g31t2J6VgA=
+                assertEquals("z/8awwXiFSObxVIHMeIDDy7NRiHPzLYIwAx4AMcehfFZ/VyxlYrILxeXSuSmiO+WacT/C6ApBsoxtzvRzV7O6gA=", java.util.Base64.getEncoder().encodeToString(createTx.getSignatures(0).toByteArray()) )
+            createTx.getSignatures(0)
+        }
+    }
 }
 
