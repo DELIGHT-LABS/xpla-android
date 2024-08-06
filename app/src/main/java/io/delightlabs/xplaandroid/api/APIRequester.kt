@@ -1,7 +1,7 @@
 package io.delightlabs.xplaandroid.api
 
 import android.util.Log
-import com.google.gson.Gson
+import io.delightlabs.xplaandroid.GsonSingleton
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -49,7 +49,6 @@ enum class HttpMethod {
 class APIRequester(private val network: XplaNetwork) {
 
     private val baseUrl = URL(network.url).toURI()
-    val gson = Gson()
 
     fun buildURL(endpoint: String): URL {
         return baseUrl.resolve(endpoint).toURL()
@@ -71,7 +70,7 @@ class APIRequester(private val network: XplaNetwork) {
                 httpURLConnection.doOutput = true
 
                 // HashMap을 JSON 문자열로 변환
-                val jsonInputString = gson.toJson(param)
+                val jsonInputString = GsonSingleton.gson.toJson(param)
 
                 OutputStreamWriter(httpURLConnection.outputStream, "UTF-8").use { writer ->
                     writer.write(jsonInputString)
@@ -88,7 +87,7 @@ class APIRequester(private val network: XplaNetwork) {
                     while (br.readLine().also { output = it } != null) {
                         sb.append(output + "\n")
                     }
-                    return gson.fromJson(sb.toString(), T::class.java)
+                    return GsonSingleton.gson.fromJson(sb.toString(), T::class.java)
                 }
             }
         }.onFailure {
