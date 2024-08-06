@@ -1,8 +1,7 @@
 package io.delightlabs.xplaandroid.core.wasm.v1
 
-import com.google.gson.Gson
-import com.google.protobuf.ByteString
 import cosmwasm.wasm.v1.Tx
+import io.delightlabs.xplaandroid.GsonSingleton
 import io.delightlabs.xplaandroid.amino.AminoType
 import io.delightlabs.xplaandroid.amino.ProtocolAminoMsg
 import io.delightlabs.xplaandroid.core.Coin
@@ -18,7 +17,7 @@ data class MsgExecuteContract(
     constructor(tx: Tx.MsgExecuteContract): this(
         sender = tx.sender,
         contract = tx.contract,
-        msg = Gson().fromJson(tx.msg.toStringUtf8(), Cw20ExecuteMsg::class.java),
+        msg = GsonSingleton.gson.fromJson(tx.msg.toStringUtf8(), Cw20ExecuteMsg::class.java),
         funds = tx.fundsList.map { Coin(it.amount, it.denom) }
     )
 

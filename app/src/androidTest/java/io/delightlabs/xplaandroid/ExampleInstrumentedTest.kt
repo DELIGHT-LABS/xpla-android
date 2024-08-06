@@ -1,30 +1,22 @@
 package io.delightlabs.xplaandroid
 
-import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.google.gson.Gson
-import com.google.gson.JsonObject
 import com.google.protobuf.Any
 import com.google.protobuf.ByteString
 import cosmos.bank.v1beta1.msgSend
 import cosmos.base.v1beta1.CoinOuterClass
 import cosmos.base.v1beta1.CoinOuterClass.Coin
 import cosmos.tx.signing.v1beta1.Signing.SignMode
-import cosmos.tx.v1beta1.TxOuterClass
-import cosmwasm.wasm.v1.msgExecuteContract
 import cosmos.tx.v1beta1.TxOuterClass.Fee
 import cosmwasm.wasm.v1.msgExecuteContract
 import io.delightlabs.xplaandroid.api.APIRequester
 import io.delightlabs.xplaandroid.api.APIReturn
 import io.delightlabs.xplaandroid.api.HttpMethod
-import io.delightlabs.xplaandroid.api.TxAPI
 import io.delightlabs.xplaandroid.api.XplaNetwork
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import wallet.core.jni.PrivateKey
-import java.math.BigDecimal
-import java.util.Base64
 
 
 /**
@@ -74,8 +66,7 @@ class ExampleInstrumentedTest {
     @Test
     fun lcdWasm() {
         val query = Query(Pairs(20))
-        val gson = Gson()
-        val json = gson.toJson(query)
+        val json = GsonSingleton.gson.toJson(query)
         val response: APIReturn.TokenInfoResponse? = lcd.wasmAPI.contractQueryTokenInfo(
             "xpla1w6hv0suf8dmpq8kxd8a6yy9fnmntlh7hh9kl37qmax7kyzfd047qnnp0mm",
         )
@@ -373,7 +364,6 @@ class ExampleInstrumentedTest {
             val createTx = it.createAndSignTx(
                 CreateTxOptions(
                     memo = "U2FsdGVkX18bzNU4JzqtCxkderonQ0mZnkEFoCH/s9Thngscv/0s7hdQsdIzFDVFKK6PPJL1PYcAEfu46EVEjjLTaghGGQj9kncghM5YoV8=",
-
 //                    memo = "test",
                     msgs = listOf(msg),
                     fee = fee,
