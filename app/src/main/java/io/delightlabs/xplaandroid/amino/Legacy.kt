@@ -1,7 +1,7 @@
 package io.delightlabs.xplaandroid.amino
-import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.google.protobuf.Any
+import io.delightlabs.xplaandroid.GsonSingleton
 import java.io.Serializable
 import io.delightlabs.xplaandroid.core.bank.v1beta1.MsgSend
 import io.delightlabs.xplaandroid.core.wasm.v1.MsgExecuteContract
@@ -14,8 +14,7 @@ data class AminoType(
     var value: ProtocolAminoMsg
 ) : Serializable {
     fun serializedData(): ByteArray {
-        val gson = Gson()
-        return gson.toJson(this).toByteArray()
+        return GsonSingleton.gson.toJson(this).toByteArray()
     }
 }
 

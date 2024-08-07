@@ -1,6 +1,7 @@
 package io.delightlabs.xplaandroid
 
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.google.protobuf.any
 import com.google.protobuf.kotlin.toByteString
 import cosmos.base.v1beta1.CoinOuterClass.Coin
@@ -23,6 +24,13 @@ import wallet.core.jni.Hash.keccak256
 import wallet.core.jni.PrivateKey
 import wallet.core.jni.PublicKey
 
+object GsonSingleton {
+    val gson: Gson by lazy {
+        GsonBuilder()
+            .disableHtmlEscaping()
+            .create()
+    }
+}
 
 data class SignOptions(
     val accountNumber: Int?,
@@ -178,7 +186,7 @@ class LCDWallet(lcdClient: LCDClient, privateKey: PrivateKey, mnemonic: String) 
         val signDocSerialized: ByteArray
         if(options.signMode == Signing.SignMode.SIGN_MODE_LEGACY_AMINO_JSON) {
             val stdSignDoc = StdSignDoc(signDoc)
-            signDocSerialized = Gson().toJson(stdSignDoc).toByteArray()
+            signDocSerialized = GsonSingleton.gson.toJson(stdSignDoc).toByteArray()
         } else {
             signDocSerialized = signDoc.toByteArray()
         }
