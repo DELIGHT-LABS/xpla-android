@@ -1,27 +1,22 @@
 package io.delightlabs.xplaandroid
 
-import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.google.gson.Gson
 import com.google.protobuf.Any
-import com.google.protobuf.kotlin.toByteString
-import com.google.protobuf.kotlin.toByteStringUtf8
+import com.google.protobuf.ByteString
 import cosmos.bank.v1beta1.msgSend
 import cosmos.base.v1beta1.CoinOuterClass
 import cosmos.base.v1beta1.CoinOuterClass.Coin
-import cosmos.tx.v1beta1.TxOuterClass
+import cosmos.tx.signing.v1beta1.Signing.SignMode
+import cosmos.tx.v1beta1.TxOuterClass.Fee
 import cosmwasm.wasm.v1.msgExecuteContract
 import io.delightlabs.xplaandroid.api.APIRequester
 import io.delightlabs.xplaandroid.api.APIReturn
 import io.delightlabs.xplaandroid.api.HttpMethod
-import io.delightlabs.xplaandroid.api.TxAPI
 import io.delightlabs.xplaandroid.api.XplaNetwork
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import wallet.core.jni.PrivateKey
-import java.math.BigDecimal
-import java.util.Base64
 
 
 /**
@@ -32,7 +27,7 @@ import java.util.Base64
 @RunWith(AndroidJUnit4::class)
 class ExampleInstrumentedTest {
     private val lcd = LCDClient(
-        network = XplaNetwork.TestNet,
+        network = XplaNetwork.Testnet,
         gasAdjustment = "3",
         gasPrices = listOf(CoinOuterClass.Coin.newBuilder().apply {
             this.amount = "850000000000"
@@ -71,13 +66,12 @@ class ExampleInstrumentedTest {
     @Test
     fun lcdWasm() {
         val query = Query(Pairs(20))
-        val gson = Gson()
-        val json = gson.toJson(query)
-        val response: APIReturn.PairResponse? = lcd.wasmAPI.contractQuery(
-            "xpla1j4kgjl6h4rt96uddtzdxdu39h0mhn4vrtydufdrk4uxxnrpsnw2qug2yx2",
-            json.toString()
+        val json = GsonSingleton.gson.toJson(query)
+        val response: APIReturn.TokenInfoResponse? = lcd.wasmAPI.contractQueryTokenInfo(
+            "xpla1w6hv0suf8dmpq8kxd8a6yy9fnmntlh7hh9kl37qmax7kyzfd047qnnp0mm",
         )
-        response?.let { println("wasm smartQuery:: ${it.data.pairs[0]}") }
+        println("wasm smartQuery:: $response")
+        response?.let { println("wasm smartQuery:: ${it.data}") }
     }
 
     @Test
@@ -89,7 +83,7 @@ class ExampleInstrumentedTest {
 
     @Test
     fun networkTest() {
-        val apiRequester = APIRequester(XplaNetwork.TestNet)
+        val apiRequester = APIRequester(XplaNetwork.Testnet)
         val result = apiRequester.request<APIReturn.AccountReturn>(
             HttpMethod.GET,
             "/cosmos/auth/v1beta1/accounts/xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9"
@@ -132,164 +126,257 @@ class ExampleInstrumentedTest {
         }
     }
 
-
     @Test
-    fun testSwapCW20() {
-
-        val seedPhrase =
-            "table dinner sibling crisp hen genuine wing volume sport north omit cushion struggle script dinosaur merge medal visa also mixture faint surge boy wild"
-        lcd.wallet(mnemonic = seedPhrase).let { wallet ->
-            println(wallet.address)
-            val offerAmount = "1000000" // 1 ctxt
-            // cw20 -> anything
-            val contractAddr = "xpla123dl27tlhs4lyvywarnrydtdr8kca2fy2r75ck3qzpupy5dsdwvqxu5vy0"
-            val send = mapOf(
-                "send" to mapOf(
-                    "contract" to contractAddr,
-                    "amount" to offerAmount,
-                    "msg" to "eyJzd2FwIjp7fX0="
-                )
-            )
-
-            Log.d("send", "$send")
-            val jsonString = Gson().toJson(send)
-            Log.d("transferJsonString", jsonString)
-            val msgExecute = msgExecuteContract {
-                this.sender = wallet.address // 보내는 주소
-                this.contract =
-                    "xpla19w8vmg7tmh07ztr3v7lq8sdny6jjkj6pk03a7fk52gpgepfxnlgq8g7r50" // token address (from) : ctxt
-                this.msg = jsonString.toByteStringUtf8()
-                this.funds
-            }
-
-            val any = Any.newBuilder()
-                .setTypeUrl("/cosmwasm.wasm.v1.MsgExecuteContract")
-                .setValue(msgExecute.toByteString())
-                .build()
-
-            val createTx = wallet.createAndSignTx(
-                CreateTxOptions(msgs = listOf(any))
-            )
-
-            val broadcastRes = txAPI.broadcast(createTx)
-            println("broadcastRes: $broadcastRes")
-        }
-    }
-
-    @Test
-    fun testSwapNativeToken() {
-
-        val seedPhrase =
-            "table dinner sibling crisp hen genuine wing volume sport north omit cushion struggle script dinosaur merge medal visa also mixture faint surge boy wild"
-        lcd.wallet(mnemonic = seedPhrase).let { wallet ->
-            println(wallet.address)
-            val offerAmount = "10000000000000000000" // 10xpla
-            val denom = "axpla"
-            // native token -> anything
+    fun testSignCosmosMsg() {
+        val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
+        val lcd = LCDClient(
+            XplaNetwork.Localnet,
+            gasAdjustment = "1",
+            gasPrices = listOf()
+        )
+        lcd.wallet(mnemonic = seedPhrase).let {
             val sendCoin = Coin.newBuilder()
-                .setAmount(offerAmount)
-                .setDenom(denom)
+                .setAmount("1")
+                .setDenom("axpla")
                 .build()
 
-            val swap = mapOf(
-                "offer_asset" to mapOf(
-                    "amount" to offerAmount,
-                    "info" to mapOf(
-                        "native_token" to mapOf(
-                            "denom" to denom
-                        )
-                    )
-                )
-            )
-            Log.d("swap", "$swap")
-            val jsonString = Gson().toJson(swap)
-            Log.d("transferJsonString", jsonString)
-            val msgExecute = msgExecuteContract {
-                this.sender = wallet.address // 보내는 주소
-                this.contract = "xpla123dl27tlhs4lyvywarnrydtdr8kca2fy2r75ck3qzpupy5dsdwvqxu5vy0"
-                this.msg = jsonString.toByteStringUtf8()
-                this.funds.add(sendCoin)
+            val txSend = msgSend {
+                this.toAddress = "xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9"
+                this.fromAddress = "xpla1nns26tapuzt36vdz0aadk7svm8p6xndtmwlyg8"
+                this.amount.add(sendCoin)
             }
 
+            val msg = Any.newBuilder()
+                .setTypeUrl("/cosmos.bank.v1beta1.MsgSend")
+                .setValue(txSend.toByteString())
+                .build()
 
-            val any = Any.newBuilder()
+            val createTx = it.createAndSignTx(
+                CreateTxOptions(
+                    msgs = listOf(msg),
+                    fee = Fee.newBuilder().setGasLimit(200000).build(),
+                    sequence = 1),
+                accountNumber = 0
+            )
+
+            assertEquals("RVlBVVTX6Sp2+2B1DBjsNBbHGxBJZUxAy1nPbiEQ4GkyRDe+lytfFg0Q105cIPQnt59Z8fpRhhb853fgSl5PWwA=", java.util.Base64.getEncoder().encodeToString(createTx.getSignatures(0).toByteArray()) )
+           createTx.getSignatures(0)
+        }
+    }
+
+    @Test
+    fun testSignAmino() {
+        val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
+        val lcd = LCDClient(
+            XplaNetwork.Localnet,
+            gasAdjustment = "1",
+            gasPrices = listOf()
+        )
+        lcd.wallet(mnemonic = seedPhrase).let {
+            val sendCoin = Coin.newBuilder()
+                .setAmount("1")
+                .setDenom("axpla")
+                .build()
+
+            val txSend = msgSend {
+                this.toAddress = "xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9"
+                this.fromAddress = "xpla1nns26tapuzt36vdz0aadk7svm8p6xndtmwlyg8"
+                this.amount.add(sendCoin)
+            }
+
+            val msg = Any.newBuilder()
+                .setTypeUrl("/cosmos.bank.v1beta1.MsgSend")
+                .setValue(txSend.toByteString())
+                .build()
+
+            val createTx = it.createAndSignTx(
+                CreateTxOptions(
+                    msgs = listOf(msg),
+                    fee = Fee.newBuilder().addAmount(0, sendCoin).setGasLimit(200000).build(),
+                    sequence = 1),
+                accountNumber = 0,
+                signMode = SignMode.SIGN_MODE_LEGACY_AMINO_JSON
+            )
+
+            assertEquals("MEgb9Kz2awtey5G9rC2ptBTYlRqUN+qfS1Qz27r3tdsmNr6qU+L2fMupYfUvTUNlT4GPN+7SL5nfWkGixPa39QE=", java.util.Base64.getEncoder().encodeToString(createTx.getSignatures(0).toByteArray()) )
+            createTx.getSignatures(0)
+        }
+    }
+
+    @Test
+    fun testSignAminoWithPayer() {
+        val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
+        val lcd = LCDClient(
+            XplaNetwork.Localnet,
+            gasAdjustment = "1",
+            gasPrices = listOf()
+        )
+        lcd.wallet(mnemonic = seedPhrase).let {
+            val sendCoin = Coin.newBuilder()
+                .setAmount("1")
+                .setDenom("axpla")
+                .build()
+
+            val txSend = msgSend {
+                this.toAddress = "xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9"
+                this.fromAddress = "xpla1nns26tapuzt36vdz0aadk7svm8p6xndtmwlyg8"
+                this.amount.add(sendCoin)
+            }
+
+            val msg = Any.newBuilder()
+                .setTypeUrl("/cosmos.bank.v1beta1.MsgSend")
+                .setValue(txSend.toByteString())
+                .build()
+
+            val createTx = it.createAndSignTx(
+                CreateTxOptions(
+                    msgs = listOf(msg),
+                    fee = Fee.newBuilder().addAmount(0, sendCoin).setGasLimit(200000).setPayer("xpla1nns26tapuzt36vdz0aadk7svm8p6xndtmwlyg8").build(),
+                    sequence = 2),
+                accountNumber = 0,
+                signMode = SignMode.SIGN_MODE_LEGACY_AMINO_JSON
+            )
+
+            assertEquals("I+F1N1QqNJ3MuWI5hGUaSyehWzPEVvFvOJZ/kZxMoZBMxVk8fkoTvB7m+qclhcspUiXzxtAu3By0+fDexCVOrAE=", java.util.Base64.getEncoder().encodeToString(createTx.getSignatures(0).toByteArray()) )
+            createTx.getSignatures(0)
+        }
+    }
+
+    @Test
+    fun testSignAminoWithPayerWhenCosmos47() {
+        val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
+        val lcd = LCDClient(
+            XplaNetwork.Testnet,
+            gasAdjustment = "1",
+            gasPrices = listOf()
+        )
+        lcd.wallet(mnemonic = seedPhrase).let {
+            val sendCoin = Coin.newBuilder()
+                .setAmount("1")
+                .setDenom("axpla")
+                .build()
+
+            val txSend = msgSend {
+                this.toAddress = "xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9"
+                this.fromAddress = "xpla1nns26tapuzt36vdz0aadk7svm8p6xndtmwlyg8"
+                this.amount.add(sendCoin)
+            }
+
+            val msg = Any.newBuilder()
+                .setTypeUrl("/cosmos.bank.v1beta1.MsgSend")
+                .setValue(txSend.toByteString())
+                .build()
+
+            val createTx = it.createAndSignTx(
+                CreateTxOptions(
+                    msgs = listOf(msg),
+                    fee = Fee.newBuilder().addAmount(0, sendCoin).setGasLimit(200000).setPayer("xpla1nns26tapuzt36vdz0aadk7svm8p6xndtmwlyg8").build(),
+                    sequence = 2),
+                accountNumber = 0,
+                signMode = SignMode.SIGN_MODE_LEGACY_AMINO_JSON
+            )
+
+            assertEquals("1WW5WdDSn/7DAImtpZxgggTMcWoQrxqGHUGyQUpuCFcsMEgAl3Vxgteye4DSyxVzlM5imp3eRp/UJsPYgnn/5AE=", java.util.Base64.getEncoder().encodeToString(createTx.getSignatures(0).toByteArray()) )
+            createTx.getSignatures(0)
+        }
+    }
+
+    @Test
+    fun testSignAminoContractMsg() {
+        val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
+        val lcd = LCDClient(
+            XplaNetwork.Localnet,
+            gasAdjustment = "1",
+            gasPrices = listOf()
+        )
+
+        lcd.wallet(mnemonic = seedPhrase).let {
+            val feeCoin = Coin.newBuilder()
+                .setAmount("1")
+                .setDenom("axpla")
+                .build()
+
+            val transferMsg = """{
+                "transfer": {
+                    "amount": "1",
+                "recipient": "xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9"
+            }
+            }""".toByteArray()
+
+            val msgExecute = msgExecuteContract {
+                this.sender = "xpla1nns26tapuzt36vdz0aadk7svm8p6xndtmwlyg8"
+                this.contract = "xpla14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9s525s0h"
+                this.msg = ByteString.copyFrom(transferMsg)
+            }
+
+            val msg = Any.newBuilder()
                 .setTypeUrl("/cosmwasm.wasm.v1.MsgExecuteContract")
                 .setValue(msgExecute.toByteString())
                 .build()
 
-            val createTx = wallet.createAndSignTx(
-                CreateTxOptions(msgs = listOf(any))
+            val createTx = it.createAndSignTx(
+                CreateTxOptions(
+                    msgs = listOf(msg),
+                    fee = Fee.newBuilder().addAmount(0, feeCoin).setGasLimit(200000).build(),
+                    sequence = 8),
+                accountNumber = 0,
+                signMode = SignMode.SIGN_MODE_LEGACY_AMINO_JSON
             )
 
-            val broadcastRes = txAPI.broadcast(createTx)
-            println("broadcastRes: $broadcastRes")
+            assertEquals("uuuGzlHcidASzxYRUtfldCjkPSq/YHUdPmUDl1Tl591a52zGqgniKLUSgzUEBUF+SetkcRtXOGJrB2bbXBUQ4QE=", java.util.Base64.getEncoder().encodeToString(createTx.getSignatures(0).toByteArray()) )
+            createTx.getSignatures(0)
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     @Test
-    fun testSimulation() {
-        // 0a21036e3d6c03d524ec795042d53213d8dc9fbc9ce8664f8f7383f74e562e759d4d83
-        val walletAddress =
-            "xpla1fct20w8zcu8ha9880p3wy8r7r8p2hagc4pfe30"/* your wallet address here */
-//        val walletLCD =  /* your walletLCD instance here */
-        val res = lcd.authAPI.accountInfo(walletAddress)
-        println("res: $res")
-        if (res != null) {
-            println("res: $res")
+    fun testSignAminoWithMemo() {
+        val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
+        val lcd = LCDClient(
+            XplaNetwork.Testnet,
+            gasAdjustment = "1.5",
+            gasPrices = listOf()
+        )
 
-            val accountNumber = res.baseAccount.accountNumber.toIntOrNull()
-            val sequence = res.baseAccount.sequence.toIntOrNull()
-            val publicKey = res.baseAccount.getPublicKey()
-            if (accountNumber != null && sequence != null && publicKey != null) {
-                val signerDatas = listOf(
-                    TxOuterClass.SignerInfo.newBuilder().apply {
-                        this.sequence = sequence.toLong()
-                        this.publicKey = Any.newBuilder().apply {
-                            this.value =
-                                "0a21${base64ToHex(publicKey)}".hexToByteArray().toByteString()
-                            this.typeUrl = PubkeyProtoType
-                        }.build()
-                    }.build()
-                )
+        lcd.wallet(mnemonic = seedPhrase).let {
 
-                val offerAmount = 1000000000000000000
+            val sendCoin = Coin.newBuilder()
+                .setAmount("1")
+                .setDenom("axpla")
+                .build()
 
-                val sendCoin = Coin.newBuilder()
-                    .setAmount("$offerAmount")
-                    .setDenom("axpla")
-                    .build()
-
-                val txSend = msgSend {
-                    this.toAddress = walletAddress
-                    this.fromAddress = walletAddress
-                    this.amount.add(sendCoin)
-                }
-
-                val any = Any.newBuilder()
-                    .setTypeUrl("/cosmos.bank.v1beta1.MsgSend")
-                    .setValue(txSend.toByteString())
-                    .build()
-
-
-                val fee = TxAPI(lcd).estimateFee(signerDatas, CreateTxOptions(msgs = listOf(any)))
-
-                if (fee.amountList.isNotEmpty()) {
-                    val amount = fee.amountList[0]
-                    println("amount: $amount")
-                    val denom = amount.denom
-                    if (denom == "axpla") {
-                        val feeAmount = BigDecimal(amount.amount.toLongOrNull() ?: 0)
-                        val feeString = feeAmount.divide(BigDecimal.TEN.pow(18)).toPlainString()
-                        println("feeString:$feeString")
-                    }
-                }
+            val txSend = msgSend {
+                this.toAddress = "xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9"
+                this.fromAddress = "xpla1nns26tapuzt36vdz0aadk7svm8p6xndtmwlyg8"
+                this.amount.add(sendCoin)
             }
+
+            val msg = Any.newBuilder()
+                .setTypeUrl("/cosmos.bank.v1beta1.MsgSend")
+                .setValue(txSend.toByteString())
+                .build()
+
+            val fee =
+                Fee.newBuilder()
+                    .setGasLimit(200000)
+                    .addAmount(sendCoin)
+                    .build()
+
+            val createTx = it.createAndSignTx(
+                CreateTxOptions(
+                    memo = "U2FsdGVkX18bzNU4JzqtCxkderonQ0mZnkEFoCH/s9Thngscv/0s7hdQsdIzFDVFKK6PPJL1PYcAEfu46EVEjjLTaghGGQj9kncghM5YoV8=",
+//                    memo = "test",
+                    msgs = listOf(msg),
+                    fee = fee,
+                    sequence = 1),
+                accountNumber = 8,
+                signMode = SignMode.SIGN_MODE_LEGACY_AMINO_JSON
+            )
+
+            // z/8awwXiFSObxVIHMeIDDy7NRiHPzLYIwAx4AMcehfFZ/VyxlYrILxeXSuSmiO+WacT/C6ApBsoxtzvRzV7O6gA=
+//oVN7JefL5gxLzqO8UOY9R7HjqtQfJxvYLBH955NGG6Ar3JntX8IxbuPnFa6fmEqAJ/NBCyXkBnyd3g31t2J6VgA=
+                assertEquals("z/8awwXiFSObxVIHMeIDDy7NRiHPzLYIwAx4AMcehfFZ/VyxlYrILxeXSuSmiO+WacT/C6ApBsoxtzvRzV7O6gA=", java.util.Base64.getEncoder().encodeToString(createTx.getSignatures(0).toByteArray()) )
+            createTx.getSignatures(0)
         }
-    }
-    fun base64ToHex(base64Str: String): String {
-        val decodedBytes = Base64.getDecoder().decode(base64Str)
-        return decodedBytes.joinToString("") { "%02x".format(it) }
     }
 }
 

@@ -49,7 +49,7 @@ class TxAPI(private val lcdClient: LCDClient) {
         signers: List<SignerOptions>,
         options: CreateTxOptions
     ): Tx {
-        var fee: TxOuterClass.Fee? = null
+        var fee: TxOuterClass.Fee? = options.fee
         val msgs: List<Any> = options.msgs
         val memo = options.memo
         val timeoutHeight = options.timeoutHeight
@@ -87,7 +87,10 @@ class TxAPI(private val lcdClient: LCDClient) {
                 }
             }
         }
-        fee = estimateFee(signerDatas, options)
+        if (fee == null) {
+            fee = estimateFee(signerDatas, options)
+        }
+
 
         if (msgs.isEmpty()) {
             return tx {
