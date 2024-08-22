@@ -97,7 +97,18 @@ class ExampleInstrumentedTest {
     fun testCreateTx() {
         val seedPhrase =
             "table dinner sibling crisp hen genuine wing volume sport north omit cushion struggle script dinosaur merge medal visa also mixture faint surge boy wild"
-        lcd.wallet(mnemonic = seedPhrase).let {
+
+        val lcdClient = LCDClient(
+            network = XplaNetwork.Mainnet,
+            gasAdjustment = "3",
+            gasPrices = listOf(
+                CoinOuterClass.Coin.newBuilder().apply {
+                    this.amount = "850000000000"
+                    this.denom = "axpla"
+                }.build(),
+            ),
+        )
+        lcdClient.wallet(mnemonic = seedPhrase).let {
             val offerAmount = 1000000000000000000
 
 
@@ -121,7 +132,7 @@ class ExampleInstrumentedTest {
                 CreateTxOptions(msgs = listOf(any))
             )
 
-            val broadcastRes = txAPI.broadcast(createTx)
+            val broadcastRes = lcdClient.txAPI.broadcast(createTx)
             println("broadcastRes: $broadcastRes")
         }
     }
