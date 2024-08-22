@@ -65,7 +65,7 @@ class APIReturn {
         val data: ContractBalance
     )
     data class ContractBalance (
-        val balance: Int
+        val balance: Double
     )
     data class PairResponse(
         val data: PairData
