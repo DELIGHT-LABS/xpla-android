@@ -109,7 +109,7 @@ class LCDWallet(lcdClient: LCDClient, privateKey: PrivateKey, mnemonic: String) 
     }
 
     fun createTx(options: CreateTxOptions): TxOuterClass.Tx {
-        val tx = txAPI.create(
+        val tx = lcdClient.txAPI.create(
             listOf(
                 SignerOptions(
                     address = address,

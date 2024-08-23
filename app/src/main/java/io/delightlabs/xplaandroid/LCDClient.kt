@@ -38,22 +38,3 @@ class LCDClient(
         return LCDWallet(this, privateKey)
     }
 }
-
-private var _txAPI: TxAPI? = null
-val txAPI: TxAPI
-    get() {
-        if (_txAPI == null) {
-            val lcdClient = LCDClient(
-                network = XplaNetwork.Testnet,
-                gasPrices = arrayListOf(
-                    coin {
-                        this.amount = "850000000000"
-                        this.denom = "axpla"
-                    }
-                ),
-                gasAdjustment = "3"
-            )
-            _txAPI = TxAPI(lcdClient)
-        }
-        return _txAPI!!
-    }
