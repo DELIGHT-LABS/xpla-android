@@ -100,7 +100,7 @@ class ExampleInstrumentedTest {
 
         val lcdClient = LCDClient(
             network = XplaNetwork.Mainnet,
-            gasAdjustment = "3",
+            gasAdjustment = "1.3",
             gasPrices = listOf(
                 CoinOuterClass.Coin.newBuilder().apply {
                     this.amount = "850000000000"
@@ -142,7 +142,7 @@ class ExampleInstrumentedTest {
         val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
         val lcd = LCDClient(
             XplaNetwork.Localnet,
-            gasAdjustment = "1",
+            gasAdjustment = "1.3",
             gasPrices = listOf()
         )
         lcd.wallet(mnemonic = seedPhrase).let {
@@ -180,7 +180,7 @@ class ExampleInstrumentedTest {
         val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
         val lcd = LCDClient(
             XplaNetwork.Localnet,
-            gasAdjustment = "1",
+            gasAdjustment = "1.3",
             gasPrices = listOf()
         )
         lcd.wallet(mnemonic = seedPhrase).let {
@@ -219,7 +219,7 @@ class ExampleInstrumentedTest {
         val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
         val lcd = LCDClient(
             XplaNetwork.Localnet,
-            gasAdjustment = "1",
+            gasAdjustment = "1.3",
             gasPrices = listOf()
         )
         lcd.wallet(mnemonic = seedPhrase).let {
@@ -258,7 +258,7 @@ class ExampleInstrumentedTest {
         val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
         val lcd = LCDClient(
             XplaNetwork.Testnet,
-            gasAdjustment = "1",
+            gasAdjustment = "1.3",
             gasPrices = listOf()
         )
         lcd.wallet(mnemonic = seedPhrase).let {
@@ -297,7 +297,7 @@ class ExampleInstrumentedTest {
         val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
         val lcd = LCDClient(
             XplaNetwork.Localnet,
-            gasAdjustment = "1",
+            gasAdjustment = "1.3",
             gasPrices = listOf()
         )
 
