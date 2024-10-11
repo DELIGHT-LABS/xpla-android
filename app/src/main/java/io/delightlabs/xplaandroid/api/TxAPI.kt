@@ -20,6 +20,8 @@ import cosmos.tx.v1beta1.txBody
 import io.delightlabs.xplaandroid.CreateTxOptions
 import io.delightlabs.xplaandroid.LCDClient
 import io.delightlabs.xplaandroid.PubkeyProtoType
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 enum class BroadcastMode {
     BROADCAST_MODE_SYNC,
@@ -180,7 +182,7 @@ class TxAPI(private val lcdClient: LCDClient) {
         tx = tx.appendEmptySignatures(signers)
 
         if (gas == null || gas == "auto" || gas == "0") {
-            gasAdjustment?.toInt().let {
+            gasAdjustment?.toDouble().let {
                 estimateGas(tx, it!!, signers).let {
                     gas = it.toString()
                 }
@@ -191,23 +193,20 @@ class TxAPI(private val lcdClient: LCDClient) {
         return fee {
             this.amount.clear()
             feeAmount.let { this.amount.addAll(feeAmount) }
-            this.gasLimit = gas?.toLong() ?: 0
+            this.gasLimit = gas?.toDouble()?.toLong() ?: 0
             this.payer = ""
             this.granter = ""
         }
     }
 
     private fun getCoinAmounts(gasPricesCoins: List<Coin>, gas: String): List<Coin> {
-        return gasPricesCoins.map {
+        return gasPricesCoins.map { coin ->
             val builder = Coin.newBuilder()
-            if (it.amount.toULongOrNull() != null && gas.toULongOrNull() != null) {
-                val coinAmount = it.amount.toULong()
-                val denom = it.denom
-                gas.toULong().let {
-                    val multipliedAmount = (coinAmount * it).toString()
-                    builder.setAmount(multipliedAmount)
-                        .setDenom(denom)
-                }
+            coin.amount.toBigDecimalOrNull()?.let { coinAmount ->
+                val gasAmount = BigDecimal.valueOf(gas.toDouble())
+                val multipliedAmount = coinAmount.multiply(gasAmount).setScale(0, RoundingMode.HALF_UP)
+                builder.setAmount(multipliedAmount.toString())
+                    .setDenom(coin.denom)
             }
             builder.build()
         }
@@ -215,9 +214,9 @@ class TxAPI(private val lcdClient: LCDClient) {
 
     private fun estimateGas(
         tx: Tx,
-        gasAdjustment: Int,
+        gasAdjustment: Double,
         signers: List<SignerInfo>? = null
-    ): Int {
+    ): Double {
         var simTx = tx
 
         if (tx.signaturesList.isEmpty()) {
