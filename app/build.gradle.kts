@@ -2,6 +2,7 @@ plugins {
     id("com.google.protobuf") version "0.9.4"
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
+    id("maven-publish")
 }
 
 buildscript {
@@ -56,9 +57,35 @@ dependencies {
         exclude(group = "com.google.protobuf", module = "protobuf-javalite")
     }
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-
 }
+afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release"
+            create<MavenPublication>("release") {
+                // Applies the component for the release build variant
+                from(components["release"])
 
+                // Publication attributes
+                groupId = "com.github.issaclsakee"
+                artifactId = "XplaAndroid"
+                version = "1.0.0"
+            }
+
+            // Creates a Maven publication called "debug"
+            create<MavenPublication>("debug") {
+                // Applies the component for the debug build variant
+                from(components["debug"])
+
+                // Publication attributes
+                groupId = "com.github.issaclsakee"
+                artifactId = "XplaAndroid"
+                version = "1.0.0"            
+            }
+        }
+    }
+}
+group = "com.github.issaclsakee"
 protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:$protobufVersion"
@@ -94,7 +121,6 @@ protobuf {
         }
     }
 }
-
 sourceSets {
     arrayOf("debug", "release", "main").forEach { sourceSetName ->
         val sourceSet = findByName(sourceSetName)
@@ -108,5 +134,4 @@ sourceSets {
             )
         }
     }
-
 }

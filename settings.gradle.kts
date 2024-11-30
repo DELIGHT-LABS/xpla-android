@@ -24,6 +24,9 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven {
+            url = uri("https://jitpack.io")
+        }
+        maven {
             url = uri("https://maven.pkg.github.com/trustwallet/wallet-core")
             credentials {
                 username = properties["gpr.user"] as? String
