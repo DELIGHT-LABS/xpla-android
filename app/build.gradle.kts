@@ -58,7 +58,7 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
 }
-
+group = "com.github.issaclsakee"
 protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:$protobufVersion"
@@ -94,7 +94,6 @@ protobuf {
         }
     }
 }
-
 sourceSets {
     arrayOf("debug", "release", "main").forEach { sourceSetName ->
         val sourceSet = findByName(sourceSetName)
@@ -108,5 +107,4 @@ sourceSets {
             )
         }
     }
-
 }
