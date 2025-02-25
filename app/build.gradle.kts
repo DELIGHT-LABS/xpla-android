@@ -40,9 +40,9 @@ android {
     }
 }
 
-val grpcVersion = "1.54.0"
+val grpcVersion = "1.67.1"
 val grpcKotlinVersion = "1.4.1"
-val protobufVersion = "4.26.0"
+val protobufVersion = "4.29.3"
 
 dependencies {
     implementation("io.grpc:grpc-kotlin-stub:$grpcKotlinVersion")

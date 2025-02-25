@@ -2,6 +2,9 @@ package io.delightlabs.xplaandroid
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.google.protobuf.Descriptors
+import com.google.protobuf.Descriptors.FileDescriptor
+import com.google.protobuf.TypeRegistry
 import com.google.protobuf.any
 import com.google.protobuf.kotlin.toByteString
 import cosmos.tx.signing.v1beta1.Signing
@@ -29,6 +32,43 @@ object GsonSingleton {
         GsonBuilder()
             .disableHtmlEscaping()
             .create()
+    }
+}
+
+object TypeRegistrySingleton {
+    private const val EXCLUDE_SUFFIX = "Response"
+
+    val typeRegistry: TypeRegistry by lazy {
+        TypeRegistry.newBuilder().apply {
+            listOf(
+                cosmos.auth.v1beta1.Tx.getDescriptor(),
+                cosmos.bank.v1beta1.Tx.getDescriptor(),
+                cosmos.crisis.v1beta1.Tx.getDescriptor(),
+                cosmos.gov.v1beta1.Tx.getDescriptor(),
+                cosmos.gov.v1.Tx.getDescriptor(),
+                cosmos.mint.v1beta1.Tx.getDescriptor(),
+                cosmos.slashing.v1beta1.Tx.getDescriptor(),
+                cosmos.distribution.v1beta1.Tx.getDescriptor(),
+                cosmos.staking.v1beta1.Tx.getDescriptor(),
+                cosmos.upgrade.v1beta1.Tx.getDescriptor(),
+                cosmos.evidence.v1beta1.Tx.getDescriptor(),
+                cosmos.feegrant.v1beta1.Tx.getDescriptor(),
+                cosmos.authz.v1beta1.Tx.getDescriptor(),
+                cosmwasm.wasm.v1.Tx.getDescriptor(),
+                ethermint.evm.v1.Tx.getDescriptor(),
+                ethermint.feemarket.v1.Tx.getDescriptor(),
+                xpla.reward.v1beta1.Tx.getDescriptor(),
+                xpla.volunteer.v1beta1.Tx.getDescriptor(),
+                xpla.offchain.auth.Msg.getDescriptor(),
+            ).forEach { descriptor ->
+                registerMsgTypes(descriptor, this)
+            }
+        }.build()
+    }
+
+    private fun registerMsgTypes(descriptor: FileDescriptor, builder: TypeRegistry.Builder) {
+        descriptor.messageTypes.filterNot { it.fullName.endsWith(EXCLUDE_SUFFIX) }
+            .forEach { builder.add(it) }
     }
 }
 

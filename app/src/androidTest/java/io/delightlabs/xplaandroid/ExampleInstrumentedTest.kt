@@ -360,5 +360,46 @@ class ExampleInstrumentedTest {
             createTx.getSignatures(0)
         }
     }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    @Test
+    fun testJsonToAny() {
+        val strJson = """
+            {
+            "fee": {
+                "amount": [
+                    {
+                        "amount": "32254320000000000",
+                        "denom": "axpla"
+                    }
+                ],
+                "gas_limit": "115194"
+            },
+            "memo": "",
+            "msgs": [
+                {
+                    "@type": "/cosmos.bank.v1beta1.MsgSend",
+                    "amount": [
+                        {
+                            "amount": "10000000000000000",
+                            "denom": "axpla"
+                        }
+                    ],
+                    "from_address": "xpla1lg22287cj523vgdah8z4287nuzct43tmdtj69w",
+                    "to_address": "xpla1m9ttxu9dewu9s7jyuzaz9przerq4x8ev3crsem"
+                }
+            ]
+        }
+        """.trimIndent()
+
+        val builder = Tx.CreateTxOptions.newBuilder()
+        JsonFormat.parser().usingTypeRegistry(TypeRegistrySingleton.typeRegistry).merge(strJson, builder)
+        val createTx = builder.build()
+
+        assertEquals(
+            "0a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412760a2b78706c61316c673232323837636a3532337667646168387a343238376e757a63743433746d64746a363977122b78706c61316d397474787539646577753973376a79757a617a3970727a657271347838657633637273656d1a1a0a056178706c6112113130303030303030303030303030303030",
+            createTx.getMsgs(0).toByteArray().toHexString()
+        )
+    }
 }
 
