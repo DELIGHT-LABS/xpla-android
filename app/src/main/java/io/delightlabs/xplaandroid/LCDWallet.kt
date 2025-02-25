@@ -60,6 +60,14 @@ object TypeRegistrySingleton {
                 xpla.reward.v1beta1.Tx.getDescriptor(),
                 xpla.volunteer.v1beta1.Tx.getDescriptor(),
                 xpla.offchain.auth.Msg.getDescriptor(),
+                ibc.core.client.v1.Tx.getDescriptor(),
+                ibc.core.channel.v1.Tx.getDescriptor(),
+                ibc.core.connection.v1.Tx.getDescriptor(),
+                ibc.applications.fee.v1.Tx.getDescriptor(),
+                ibc.applications.transfer.v1.Tx.getDescriptor(),
+                ibc.applications.interchain_accounts.host.v1.Tx.getDescriptor(),
+                ibc.applications.interchain_accounts.controller.v1.Tx.getDescriptor(),
+                ibc.lightclients.wasm.v1.Tx.getDescriptor(),
             ).forEach { descriptor ->
                 registerMsgTypes(descriptor, this)
             }
