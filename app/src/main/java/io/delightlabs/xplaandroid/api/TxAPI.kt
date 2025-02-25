@@ -17,9 +17,9 @@ import cosmos.tx.v1beta1.modeInfo
 import cosmos.tx.v1beta1.signerInfo
 import cosmos.tx.v1beta1.tx
 import cosmos.tx.v1beta1.txBody
-import io.delightlabs.xplaandroid.CreateTxOptions
 import io.delightlabs.xplaandroid.LCDClient
 import io.delightlabs.xplaandroid.PubkeyProtoType
+import xpla.tx.Tx.CreateTxOptions
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -31,7 +31,7 @@ enum class BroadcastMode {
 
 data class SignerOptions(
     val address: String?,
-    val sequenceNumber: Int?,
+    val sequenceNumber: Long?,
     val publicKey: String?
 )
 
@@ -52,7 +52,7 @@ class TxAPI(private val lcdClient: LCDClient) {
         options: CreateTxOptions
     ): Tx {
         var fee: TxOuterClass.Fee? = options.fee
-        val msgs: List<Any> = options.msgs
+        val msgs: List<Any> = options.msgsList
         val memo = options.memo
         val timeoutHeight = options.timeoutHeight
         val signerDatas: MutableList<SignerInfo> = mutableListOf()
@@ -65,7 +65,7 @@ class TxAPI(private val lcdClient: LCDClient) {
                 signer.address?.let { address ->
                     lcdClient.authAPI.accountInfo(address)?.let { accountInfo ->
                         if (sequenceNumber == null) {
-                            sequenceNumber = accountInfo.baseAccount.getSequenceNumber().toInt()
+                            sequenceNumber = accountInfo.baseAccount.getSequenceNumber().toLong()
                         }
 
                         if (publicKey == null) {
@@ -133,11 +133,11 @@ class TxAPI(private val lcdClient: LCDClient) {
         signers: List<SignerInfo>,
         options: CreateTxOptions,
     ): TxOuterClass.Fee {
-        val gasPrices = if (options.gasPrices != null) options.gasPrices else lcdClient.gasPrices
+        val gasPrices = if (options.gasPricesList != null) options.gasPricesList else lcdClient.gasPrices
         val gasAdjustment =
-            if (options.gasPrices != null) options.gasAdjustment else lcdClient.gasAdjustment
-        val feeDenoms = options.feeDenoms
-        val msgs = options.msgs
+            if (options.gasPricesList != null) options.gasAdjustment else lcdClient.gasAdjustment
+        val feeDenoms = options.feeDenomsList
+        val msgs = options.msgsList
         var gas: String? = options.gas
         var gasPricesCoins: List<Coin> = listOf()
 
