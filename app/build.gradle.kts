@@ -1,3 +1,5 @@
+import com.google.protobuf.gradle.id
+
 plugins {
     id("com.google.protobuf") version "0.9.4"
     id("com.android.library")
@@ -46,6 +48,7 @@ dependencies {
     implementation("io.grpc:grpc-kotlin-stub:$grpcKotlinVersion")
     implementation("io.grpc:grpc-protobuf:$grpcVersion")
     implementation("com.google.protobuf:protobuf-kotlin:$protobufVersion")
+    implementation("com.google.protobuf:protobuf-java-util:$protobufVersion")
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
@@ -91,32 +94,11 @@ protobuf {
         artifact = "com.google.protobuf:protoc:$protobufVersion"
     }
 
-    plugins {
-        create("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:$grpcVersion"
-        }
-        create("grpckt") {
-            artifact = "io.grpc:protoc-gen-grpc-kotlin:$grpcKotlinVersion:jdk8@jar"
-        }
-    }
-
     generateProtoTasks {
         all().forEach {
-            it.plugins {
-                create("grpc") {
-                    option("lite")
-                }
-                create("grpckt") {
-                    option("lite")
-                }
-            }
             it.builtins {
-                create("java") {
-                    option("lite")
-                }
-                create("kotlin") {
-                    option("lite")
-                }
+                id("java")
+                id("kotlin")
             }
         }
     }
