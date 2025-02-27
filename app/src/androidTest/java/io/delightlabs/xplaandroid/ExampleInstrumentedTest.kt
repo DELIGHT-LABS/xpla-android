@@ -401,5 +401,38 @@ class ExampleInstrumentedTest {
             createTx.getMsgs(0).toByteArray().toHexString()
         )
     }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    @Test
+    fun testMsgExecuteJsonToAny() {
+        val strJson = """
+            {
+          "fee": {"amount":[{"amount":"427803512500000000","denom":"axpla"}],"gas_limit":"503298"},
+          "msgs": [
+            {
+              "@type": "/cosmwasm.wasm.v1.MsgExecuteContract",
+              "contract": "xpla1vgay526xzh725vpur7drsyxhlvg4fxfvu5dczcctz35ct23q4vpqxqdemw",
+              "funds": [
+                {
+                  "amount": "500000000000000000",
+                  "denom": "axpla"
+                }
+              ],
+              "msg": "eyJzd2FwIjogeyJiZWxpZWZfcHJpY2UiOiAiMTE0NC4xNjQ3NTk3MjU0MDA0NTc2NjUiLCAiZGVhZGxpbmUiOiAxNzQwNjQwMDUwLCAibWF4X3NwcmVhZCI6ICIwLjAwMTAiLCAib2ZmZXJfYXNzZXQiOiB7ImFtb3VudCI6ICI1MDAwMDAwMDAwMDAwMDAwMDAwIiwgImluZm8iOiB7Im5hdGl2ZV90b2tlbiI6IHsiZGVub20iOiAiYXhwbGEifX19fX0=",
+              "sender": "xpla1lg22287cj523vgdah8z4287nuzct43tmdtj69w"
+            }
+          ]
+        }
+        """.trimIndent()
+
+        val builder = Tx.CreateTxOptions.newBuilder()
+        JsonFormat.parser().usingTypeRegistry(TypeRegistrySingleton.typeRegistry).merge(strJson, builder)
+        val createTx = builder.build()
+
+        assertEquals(
+            "0a242f636f736d7761736d2e7761736d2e76312e4d736745786563757465436f6e747261637412d3020a2b78706c61316c673232323837636a3532337667646168387a343238376e757a63743433746d64746a363977123f78706c613176676179353236787a6837323576707572376472737978686c76673466786676753564637a6363747a3335637432337134767071787164656d771ac5017b2273776170223a207b2262656c6965665f7072696365223a2022313134342e313634373539373235343030343537363635222c2022646561646c696e65223a20313734303634303035302c20226d61785f737072656164223a2022302e30303130222c20226f666665725f6173736574223a207b22616d6f756e74223a202235303030303030303030303030303030303030222c2022696e666f223a207b226e61746976655f746f6b656e223a207b2264656e6f6d223a20226178706c61227d7d7d7d7d2a1b0a056178706c611212353030303030303030303030303030303030",
+            createTx.getMsgs(0).toByteArray().toHexString()
+        )
+    }
 }
 
