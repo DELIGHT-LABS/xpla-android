@@ -1,5 +1,6 @@
 package io.delightlabs.xplaandroid
 
+import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.protobuf.Any
 import com.google.protobuf.ByteString
@@ -99,9 +100,7 @@ class ExampleInstrumentedTest {
 
     @Test
     fun testCreateTx() {
-        val seedPhrase =
-            "table dinner sibling crisp hen genuine wing volume sport north omit cushion struggle script dinosaur merge medal visa also mixture faint surge boy wild"
-
+        val seedPhrase = "table dinner sibling crisp hen genuine wing volume sport north omit cushion struggle script dinosaur merge medal visa also mixture faint surge boy wild"
         val lcdClient = LCDClient(
             network = XplaNetwork.Mainnet,
             gasAdjustment = "1.3",
@@ -112,18 +111,17 @@ class ExampleInstrumentedTest {
                 }.build(),
             ),
         )
-        lcdClient.wallet(mnemonic = seedPhrase).let {
+
+        lcdClient.wallet(mnemonic = seedPhrase).let { wallet ->
             val offerAmount = 1000000000000000000
-
-
             val sendCoin = Coin.newBuilder()
                 .setAmount("$offerAmount")
                 .setDenom("axpla")
                 .build()
 
             val txSend = msgSend {
-                this.toAddress = it.address
-                this.fromAddress = it.address
+                this.toAddress = wallet.address
+                this.fromAddress = wallet.address
                 this.amount.add(sendCoin)
             }
 
@@ -132,17 +130,29 @@ class ExampleInstrumentedTest {
                 .setValue(txSend.toByteString())
                 .build()
 
-            val createTx = it.createAndSignTx(
+            val createTx = wallet.createAndSignTx(
                 createTxOptions {
                     this.msgs.add(any)
-                }
+                    gas = "100000"
+                    this.fee = Fee.newBuilder()
+                        .setGasLimit(100000)
+                        .addAmount(
+                            Coin.newBuilder()
+                                .setAmount("85000000000000000")
+                                .setDenom("axpla")
+                                .build()
+                        )
+                        .build()
+                    this.sequence = 1
+                    }
             )
 
-            val broadcastRes = lcdClient.txAPI.broadcast(createTx)
-            println("broadcastRes: $broadcastRes")
+            assertEquals(
+                "TZ4XEmv/XYF7bYYBMbIEt3tKmGPhclixbcgpKWPjUBUnkO9rEy472FG2S6p6l3SKSoq1KSj+Mlm/BVSexbJMrwE=",
+                java.util.Base64.getEncoder().encodeToString(createTx.getSignatures(0).toByteArray())
+            )
         }
     }
-
     @Test
     fun testSignCosmosMsg() {
         val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
