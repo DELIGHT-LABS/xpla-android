@@ -51,25 +51,45 @@ class TxAPI(private val lcdClient: LCDClient) {
         signers: List<SignerOptions>,
         options: CreateTxOptions
     ): Tx {
-        val signerDatas: List<SignerInfo> = signers.mapNotNull { signer ->
-            signer.address?.let { address ->
-                val accountInfo = lcdClient.authAPI.accountInfo(address)
-                accountInfo?.let {
-                    signerInfo {
-                        this.sequence = it.baseAccount.sequence.toLong()
-                        this.publicKey = Any.newBuilder()
-                            .setValue("0a21${signer.publicKey}".hexToByteArray().toByteString())
-                            .setTypeUrl(PubkeyProtoType)
-                            .build()
+        var fee: TxOuterClass.Fee? = options.fee
+        val msgs: List<Any> = options.msgsList
+        val memo = options.memo
+        val timeoutHeight = options.timeoutHeight
+        val signerDatas: MutableList<SignerInfo> = mutableListOf()
+
+        for (signer in signers) {
+            var sequenceNumber = signer.sequenceNumber
+            var publicKey = signer.publicKey
+            if (sequenceNumber == null || publicKey == null) {
+                signer.address?.let { address ->
+                    lcdClient.authAPI.accountInfo(address)?.let { accountInfo ->
+                        if (sequenceNumber == null) {
+                            sequenceNumber = accountInfo.baseAccount.sequence.toLong()
+                        }
+                        if (publicKey == null) {
+                            publicKey = accountInfo.baseAccount.getPublicKey()
+                        }
                     }
+                }
+            }
+            sequenceNumber?.let { sequencenum ->
+                publicKey?.let { publicKey ->
+                    signerDatas.add(
+                        signerInfo {
+                            this.sequence = sequencenum.toLong()
+                            this.publicKey = Any.newBuilder()
+                                .setValue("0a21$publicKey".hexToByteArray().toByteString())
+                                .setTypeUrl(PubkeyProtoType)
+                                .build()
+                        }
+                    )
                 }
             }
         }
 
-        var fee: TxOuterClass.Fee = estimateFee(signerDatas, options)
-        val msgs: List<Any> = options.msgsList
-        val memo = options.memo
-        val timeoutHeight = options.timeoutHeight
+        if (fee == null ||  fee.gasLimit == 0L || fee.amountCount == 0) {
+            fee = estimateFee(signerDatas.toList(), options)
+        }
 
         if (msgs.isEmpty()) {
             return tx {
@@ -165,7 +185,7 @@ class TxAPI(private val lcdClient: LCDClient) {
             }
         }
         val feeAmount = getCoinAmounts(gasPricesCoins, gas!!)
-
+        Log.d("gasLimit", "$gas ")
         return fee {
             this.amount.clear()
             feeAmount.let { this.amount.addAll(feeAmount) }

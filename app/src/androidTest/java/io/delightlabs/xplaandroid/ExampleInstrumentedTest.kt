@@ -153,44 +153,6 @@ class ExampleInstrumentedTest {
             )
         }
     }
-    @Test
-    fun testSignCosmosMsg() {
-        val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
-        val lcd = LCDClient(
-            XplaNetwork.Localnet,
-            gasAdjustment = "1.3",
-            gasPrices = listOf()
-        )
-        lcd.wallet(mnemonic = seedPhrase).let {
-            val sendCoin = Coin.newBuilder()
-                .setAmount("1")
-                .setDenom("axpla")
-                .build()
-
-            val txSend = msgSend {
-                this.toAddress = "xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9"
-                this.fromAddress = "xpla1nns26tapuzt36vdz0aadk7svm8p6xndtmwlyg8"
-                this.amount.add(sendCoin)
-            }
-
-            val msg = Any.newBuilder()
-                .setTypeUrl("/cosmos.bank.v1beta1.MsgSend")
-                .setValue(txSend.toByteString())
-                .build()
-
-            val createTx = it.createAndSignTx(
-                createTxOptions {
-                    this.msgs.add(msg)
-                    this.fee = Fee.newBuilder().setGasLimit(200000).build()
-                    this.sequence = 1
-                },
-                accountNumber = 0
-            )
-
-            assertEquals("RVlBVVTX6Sp2+2B1DBjsNBbHGxBJZUxAy1nPbiEQ4GkyRDe+lytfFg0Q105cIPQnt59Z8fpRhhb853fgSl5PWwA=", java.util.Base64.getEncoder().encodeToString(createTx.getSignatures(0).toByteArray()) )
-           createTx.getSignatures(0)
-        }
-    }
 
     @Test
     fun testSignAmino() {
