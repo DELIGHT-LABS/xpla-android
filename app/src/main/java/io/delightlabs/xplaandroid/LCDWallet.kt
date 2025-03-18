@@ -2,9 +2,11 @@ package io.delightlabs.xplaandroid
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.google.protobuf.Descriptors
+import com.google.protobuf.Descriptors.FileDescriptor
+import com.google.protobuf.TypeRegistry
 import com.google.protobuf.any
 import com.google.protobuf.kotlin.toByteString
-import cosmos.base.v1beta1.CoinOuterClass.Coin
 import cosmos.tx.signing.v1beta1.Signing
 import cosmos.tx.v1beta1.TxOuterClass
 import cosmos.tx.v1beta1.TxOuterClass.AuthInfo
@@ -23,6 +25,7 @@ import wallet.core.jni.HDWallet
 import wallet.core.jni.Hash.keccak256
 import wallet.core.jni.PrivateKey
 import wallet.core.jni.PublicKey
+import xpla.tx.Tx.CreateTxOptions
 
 object GsonSingleton {
     val gson: Gson by lazy {
@@ -32,23 +35,56 @@ object GsonSingleton {
     }
 }
 
+object TypeRegistrySingleton {
+    private const val EXCLUDE_SUFFIX = "Response"
+
+    val typeRegistry: TypeRegistry by lazy {
+        TypeRegistry.newBuilder().apply {
+            listOf(
+                cosmos.auth.v1beta1.Tx.getDescriptor(),
+                cosmos.bank.v1beta1.Tx.getDescriptor(),
+                cosmos.crisis.v1beta1.Tx.getDescriptor(),
+                cosmos.gov.v1beta1.Tx.getDescriptor(),
+                cosmos.gov.v1.Tx.getDescriptor(),
+                cosmos.mint.v1beta1.Tx.getDescriptor(),
+                cosmos.slashing.v1beta1.Tx.getDescriptor(),
+                cosmos.distribution.v1beta1.Tx.getDescriptor(),
+                cosmos.staking.v1beta1.Tx.getDescriptor(),
+                cosmos.upgrade.v1beta1.Tx.getDescriptor(),
+                cosmos.evidence.v1beta1.Tx.getDescriptor(),
+                cosmos.feegrant.v1beta1.Tx.getDescriptor(),
+                cosmos.authz.v1beta1.Tx.getDescriptor(),
+                cosmwasm.wasm.v1.Tx.getDescriptor(),
+                ethermint.evm.v1.Tx.getDescriptor(),
+                ethermint.feemarket.v1.Tx.getDescriptor(),
+                xpla.reward.v1beta1.Tx.getDescriptor(),
+                xpla.volunteer.v1beta1.Tx.getDescriptor(),
+                xpla.offchain.auth.Msg.getDescriptor(),
+                ibc.core.client.v1.Tx.getDescriptor(),
+                ibc.core.channel.v1.Tx.getDescriptor(),
+                ibc.core.connection.v1.Tx.getDescriptor(),
+                ibc.applications.fee.v1.Tx.getDescriptor(),
+                ibc.applications.transfer.v1.Tx.getDescriptor(),
+                ibc.applications.interchain_accounts.host.v1.Tx.getDescriptor(),
+                ibc.applications.interchain_accounts.controller.v1.Tx.getDescriptor(),
+                ibc.lightclients.wasm.v1.Tx.getDescriptor(),
+            ).forEach { descriptor ->
+                registerMsgTypes(descriptor, this)
+            }
+        }.build()
+    }
+
+    private fun registerMsgTypes(descriptor: FileDescriptor, builder: TypeRegistry.Builder) {
+        descriptor.messageTypes.filterNot { it.fullName.endsWith(EXCLUDE_SUFFIX) }
+            .forEach { builder.add(it) }
+    }
+}
+
 data class SignOptions(
     val accountNumber: Int?,
-    val sequence: Int?,
+    val sequence: Long?,
     val chainId: String,
     val signMode: Signing.SignMode
-)
-
-data class CreateTxOptions(
-    val msgs: List<com.google.protobuf.Any>,
-    var fee: Fee? = null,
-    var memo: String? = null,
-    var gas: String? = null,
-    var gasPrices: List<Coin>? = null,
-    var gasAdjustment: String? = null,
-    var feeDenoms: List<String>? = null,
-    var timeoutHeight: Int? = null,
-    var sequence: Int? = null
 )
 
 val derivationPath = "m/44\'/60\'/0\'/0/0"
@@ -130,16 +166,16 @@ class LCDWallet(lcdClient: LCDClient, privateKey: PrivateKey, mnemonic: String) 
         var accountNumber = accountNumber
         var sequence = options.sequence
 
-        if (accountNumber == null || sequence == null) {
+        if (accountNumber == null) {
             accountNumAndSequence()?.let {
                 accountNumber = it.baseAccount.accountNumber.toInt()
-                sequence = it.baseAccount.sequence.toInt()
+                sequence = it.baseAccount.sequence.toLong()
             }
         }
 
         val tx = createTx(options)
         accountNumber?.let {
-            sequence?.let {
+            sequence.let {
                 val signOptions = SignOptions(accountNumber, sequence, lcdClient.network.chainId, signMode)
                 val authInfo = createAuthInfo(it.toLong(), tx.authInfo.fee, signOptions)
                 getSignature(tx, authInfo, signOptions)?.let {
