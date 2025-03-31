@@ -12,9 +12,15 @@ import java.net.URL
 
 typealias APIParams = HashMap<String, String>?
 
+interface Grpc {
+    val url: String
+    val noTLS: Boolean
+}
+
 interface Network {
     val url: String
     val chainId: String
+    val grpc: Grpc
 }
 
 enum class XplaNetwork : Network {
@@ -23,18 +29,33 @@ enum class XplaNetwork : Network {
             get() = "https://cube-lcd.xpla.dev"
         override val chainId: String
             get() = "cube_47-5"
+        override val grpc: Grpc
+            get() = object : Grpc {
+                override val url: String = "xpla-grpc.publicnode.com:443"
+                override val noTLS: Boolean = false
+            }
     },
     Mainnet {
         override val url: String
             get() = "https://dimension-lcd.xpla.dev"
         override val chainId: String
             get() = "dimension_37-1"
+        override  val grpc: Grpc
+            get() = object : Grpc {
+                override val url: String = "xpla-grpc.publicnode.com:443"
+                override val noTLS: Boolean = false
+            }
     },
     Localnet {
         override val url: String
             get() = "http://localhost:1317"
         override val chainId: String
             get() = "n_1-1"
+        override val grpc: Grpc
+            get() = object : Grpc {
+                override val url: String = "http://localhost:9090"
+                override val noTLS: Boolean = true
+            }
     }
 
 }
