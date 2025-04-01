@@ -1,5 +1,6 @@
 package io.delightlabs.xplaandroid
 
+import WasmGRPC
 import cosmos.base.v1beta1.CoinOuterClass.Coin
 import cosmos.base.v1beta1.coin
 import io.delightlabs.xplaandroid.api.APIRequester
@@ -19,9 +20,11 @@ class LCDClient(
     var isClass: Boolean = false
 ) {
     var apiRequester: APIRequester = APIRequester(network)
+    var grpcClient:GRPCClient = GRPCClient(network)
     var authAPI: AuthAPI = AuthAPI(apiRequester)
     var bankAPI: BankAPI = BankAPI(apiRequester)
     var wasmAPI: WasmAPI = WasmAPI(apiRequester)
+    var wasmGRPC: WasmGRPC = WasmGRPC(grpcClient.channel)
     var txAPI: TxAPI = TxAPI(this)
     fun wallet(strength: Int, passphrase: String): LCDWallet {
         System.loadLibrary("TrustWalletCore")

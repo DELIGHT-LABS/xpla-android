@@ -1,5 +1,6 @@
 package io.delightlabs.xplaandroid
 
+import WasmGRPC
 import io.delightlabs.xplaandroid.api.XplaNetwork
 import io.delightlabs.xplaandroid.grpc.AuthGRPC
 import io.grpc.ManagedChannelBuilder
@@ -18,6 +19,7 @@ class GRPCClient (
     }.build()
 
     val auth = AuthGRPC(channel)
+    val wasm = WasmGRPC(channel)
 
     override fun close() {
         channel.shutdown().awaitTermination(10, TimeUnit.SECONDS)
