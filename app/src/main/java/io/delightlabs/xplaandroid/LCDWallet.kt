@@ -2,7 +2,6 @@ package io.delightlabs.xplaandroid
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.google.protobuf.Descriptors
 import com.google.protobuf.Descriptors.FileDescriptor
 import com.google.protobuf.TypeRegistry
 import com.google.protobuf.any
