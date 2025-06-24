@@ -22,7 +22,7 @@ data class StdFee(
         if(!fee.payer.isNullOrBlank()) {
             this.payer = fee.payer
         }
-        if(!granter.isNullOrBlank()) {
+        if(!fee.granter.isNullOrBlank()) {
             this.granter = fee.granter
         }
     }
