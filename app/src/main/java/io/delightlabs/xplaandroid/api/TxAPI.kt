@@ -64,10 +64,10 @@ class TxAPI(private val lcdClient: LCDClient) {
                 signer.address?.let { address ->
                     lcdClient.authAPI.accountInfo(address)?.let { accountInfo ->
                         if (sequenceNumber == null) {
-                            sequenceNumber = accountInfo.baseAccount.sequence.toLong()
+                            sequenceNumber = accountInfo.getSequenceNumber().toLong()
                         }
                         if (publicKey == null) {
-                            publicKey = accountInfo.baseAccount.getPublicKey()
+                            publicKey = accountInfo.getPublicKey()
                         }
                     }
                 }

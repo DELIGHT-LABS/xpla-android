@@ -27,32 +27,47 @@ class APIReturn {
     data class AccountReturn(
         val account: Account
     )
-
     data class Account(
         @SerializedName("@type")
         val type: String,
+        @SerializedName("address")
+        val addressValue: String? = null,
+        @SerializedName("pub_key")
+        val pubKeyValue: PubKey? = null,
         @SerializedName("base_account")
-        val baseAccount: BaseAccount,
+        val baseAccount: BaseAccount? = null,
+        @SerializedName("account_number")
+        val accountNumberValue: String? = null,
+        @SerializedName("sequence")
+        val sequenceValue: String? = null,
         @SerializedName("code_hash")
         val codeHash: String
-    )
+    ) {
+        fun getSequenceNumber(): String {
+            return sequenceValue ?: baseAccount?.sequence ?: ""
+        }
+
+        fun getPublicKey(): String? {
+            return pubKeyValue?.key ?: baseAccount?.pubKey?.key
+        }
+
+        fun getAddress(): String {
+            return addressValue ?: baseAccount?.address ?: ""
+        }
+
+        fun getAccountNumber(): String {
+            return accountNumberValue ?: baseAccount?.accountNumber ?: ""
+        }
+    }
 
     data class BaseAccount(
         val address: String,
         @SerializedName("pub_key")
-        val pubKey: PubKey,
+        val pubKey: PubKey?,
         @SerializedName("account_number")
         val accountNumber: String,
         val sequence: String
-    ) {
-        fun getSequenceNumber(): String {
-            return sequence
-        }
-
-        fun getPublicKey(): String {
-            return pubKey.key
-        }
-    }
+    )
 
     data class PubKey(
         @SerializedName("@type")
