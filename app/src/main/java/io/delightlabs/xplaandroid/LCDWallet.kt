@@ -135,12 +135,12 @@ class LCDWallet(lcdClient: LCDClient, privateKey: PrivateKey, mnemonic: String) 
 
     fun accountNumber(): Int? {
         val response = lcdClient.authAPI.accountInfo(this.address)
-        return response?.baseAccount?.accountNumber?.toIntOrNull()
+        return response?.getAccountNumber()?.toIntOrNull()
     }
 
     fun sequence(): Int? {
         val response = lcdClient.authAPI.accountInfo(this.address)
-        return response?.baseAccount?.sequence?.toIntOrNull()
+        return response?.getSequenceNumber()?.toIntOrNull()
     }
 
     fun createTx(options: CreateTxOptions): TxOuterClass.Tx {
@@ -167,8 +167,8 @@ class LCDWallet(lcdClient: LCDClient, privateKey: PrivateKey, mnemonic: String) 
 
         if (accountNumber == null) {
             accountNumAndSequence()?.let {
-                accountNumber = it.baseAccount.accountNumber.toInt()
-                sequence = it.baseAccount.sequence.toLong()
+                accountNumber = it.getAccountNumber().toInt()
+                sequence = it.getSequenceNumber().toLong()
             }
         }
 

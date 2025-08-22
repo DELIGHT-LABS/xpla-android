@@ -62,7 +62,7 @@ class ExampleInstrumentedTest {
     fun lcdAuth() {
         val response: APIReturn.Account? =
             lcd.authAPI.accountInfo("xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9")
-        response?.baseAccount?.let { println("public address: ${it.address}") }
+        response?.let { println("public address: ${it.getAddress()}") }
     }
 
     data class Query(val pairs: Pairs)

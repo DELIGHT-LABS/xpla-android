@@ -31,7 +31,7 @@ enum class XplaNetwork : Network {
             get() = "cube_47-5"
         override val grpc: Grpc
             get() = object : Grpc {
-                override val url: String = "xpla-grpc.publicnode.com:443"
+                override val url: String = "cube-grpc.xpla.dev:443"
                 override val noTLS: Boolean = false
             }
     },
@@ -42,7 +42,7 @@ enum class XplaNetwork : Network {
             get() = "dimension_37-1"
         override  val grpc: Grpc
             get() = object : Grpc {
-                override val url: String = "xpla-grpc.publicnode.com:443"
+                override val url: String = "dimension-grpc.xpla.dev:443"
                 override val noTLS: Boolean = false
             }
     },
@@ -105,26 +105,31 @@ class APIRequester(private val network: XplaNetwork) {
                     val br = BufferedReader(InputStreamReader(httpURLConnection.inputStream))
                     val sb = StringBuilder()
                     var output: String?
+
                     while (br.readLine().also { output = it } != null) {
                         sb.append(output + "\n")
                     }
+                    println(" onSuccess $sb")
                     return GsonSingleton.gson.fromJson(sb.toString(), T::class.java)
                 }
             }
         }.onFailure {
             when (it) {
                 is MalformedURLException -> {
+                    println("throwable $it")
                     Log.d(javaClass.name, it.toString())
                     throw it
                 }
 
                 is IOException -> {
+                    println("throwable2 $it")
                     Log.d(javaClass.name, it.toString())
                     throw it
                 }
             }
         }.also {
             runCatching { httpURLConnection.disconnect() }.onFailure {
+                println("throwable3 $it")
                 throw it
             }
         }.getOrThrow()

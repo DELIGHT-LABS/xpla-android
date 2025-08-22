@@ -1,3 +1,4 @@
+import android.util.Base64
 import android.util.Log
 import com.google.gson.JsonParser
 import com.google.protobuf.ByteString
@@ -33,7 +34,7 @@ class WasmGRPC(val channel: ManagedChannel) {
         contractAddr: String,
         queryJson: String,
     ): QuerySmartContractStateResponse {
-        val queryData = ByteString.copyFrom(queryJson.toByteArray())
+        val queryData = ByteString.copyFromUtf8(queryJson)
 
         val request = QuerySmartContractStateRequest.newBuilder()
             .setAddress(contractAddr)
@@ -42,7 +43,6 @@ class WasmGRPC(val channel: ManagedChannel) {
 
         return stub.smartContractState(request)
     }
-
     inline fun <reified T> contractQuery(
         contractAddr: String,
         queryJson: String,
@@ -52,7 +52,6 @@ class WasmGRPC(val channel: ManagedChannel) {
             val jsonString = response.data.toStringUtf8()
             GsonSingleton.gson.fromJson(jsonString, T::class.java)
         } catch (e: Exception) {
-            Log.e("contractQuery Error Sak","$e")
             null
         }
     }
