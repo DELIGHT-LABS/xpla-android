@@ -148,7 +148,7 @@ class ExampleInstrumentedTest {
             )
 
             assertEquals(
-                "TZ4XEmv/XYF7bYYBMbIEt3tKmGPhclixbcgpKWPjUBUnkO9rEy472FG2S6p6l3SKSoq1KSj+Mlm/BVSexbJMrwE=",
+                "rVzjwBECXufLsi6Ew5oBBfpdHdWMpnFi14+ULTCMPGI6OaRc5r9pnBVPr0HWnHxV3s5ySVhUug53wXFcGBvSGwE=",
                 java.util.Base64.getEncoder().encodeToString(createTx.getSignatures(0).toByteArray())
             )
         }
@@ -157,11 +157,7 @@ class ExampleInstrumentedTest {
     @Test
     fun testSignAmino() {
         val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
-        val lcd = LCDClient(
-            XplaNetwork.Localnet,
-            gasAdjustment = "1.3",
-            gasPrices = listOf()
-        )
+        val lcd = lcd
         lcd.wallet(mnemonic = seedPhrase).let {
             val sendCoin = Coin.newBuilder()
                 .setAmount("1")
@@ -189,7 +185,7 @@ class ExampleInstrumentedTest {
                 signMode = SignMode.SIGN_MODE_LEGACY_AMINO_JSON
             )
 
-            assertEquals("MEgb9Kz2awtey5G9rC2ptBTYlRqUN+qfS1Qz27r3tdsmNr6qU+L2fMupYfUvTUNlT4GPN+7SL5nfWkGixPa39QE=", java.util.Base64.getEncoder().encodeToString(createTx.getSignatures(0).toByteArray()) )
+            assertEquals("1CQT59U3eRiD2MC/uAvA6SvYjbcwHa0WKGEHmTdas2FbcVCp3365yE+3xuwN+0yLBzdbKCCFkwhtQmqSdqY2LAE=", java.util.Base64.getEncoder().encodeToString(createTx.getSignatures(0).toByteArray()) )
             createTx.getSignatures(0)
         }
     }
@@ -237,11 +233,7 @@ class ExampleInstrumentedTest {
     @Test
     fun testSignAminoContractMsg() {
         val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
-        val lcd = LCDClient(
-            XplaNetwork.Localnet,
-            gasAdjustment = "1.3",
-            gasPrices = listOf()
-        )
+        val lcd = lcd
 
         lcd.wallet(mnemonic = seedPhrase).let {
             val feeCoin = Coin.newBuilder()
@@ -277,7 +269,7 @@ class ExampleInstrumentedTest {
                 signMode = SignMode.SIGN_MODE_LEGACY_AMINO_JSON
             )
 
-            assertEquals("uuuGzlHcidASzxYRUtfldCjkPSq/YHUdPmUDl1Tl591a52zGqgniKLUSgzUEBUF+SetkcRtXOGJrB2bbXBUQ4QE=", java.util.Base64.getEncoder().encodeToString(createTx.getSignatures(0).toByteArray()) )
+            assertEquals("fEr6eLdqyirgJ7VahaAVvmwWIBgJzV538qKwbiV/sH0+rU74h17rqcMtJ261vzU+7CE0Z6N2KBzdWvyCDIpfcQA=", java.util.Base64.getEncoder().encodeToString(createTx.getSignatures(0).toByteArray()) )
             createTx.getSignatures(0)
         }
     }
@@ -285,11 +277,7 @@ class ExampleInstrumentedTest {
     @Test
     fun testSignAminoWithMemo() {
         val seedPhrase = "segment symbol pigeon tourist shop brush enter combine tornado pole snow federal lobster reopen drama wagon company salmon comfort rural palm fiscal crack roof"
-        val lcd = LCDClient(
-            XplaNetwork.Testnet,
-            gasAdjustment = "1.5",
-            gasPrices = listOf()
-        )
+        val lcd = lcd
 
         lcd.wallet(mnemonic = seedPhrase).let {
 
