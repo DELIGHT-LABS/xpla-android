@@ -11,11 +11,6 @@ import io.grpc.ManagedChannel
 class WasmGRPC(val channel: ManagedChannel) {
     private val stub: QueryGrpc.QueryBlockingStub = QueryGrpc.newBlockingStub(channel)
 
-    /**
-     * Todo 코드 확인 시 삭제
-     * ex) 토큰 정보 조회 Test CTXT Address -> xpla1r57m20afwdhkwy67520p8vzdchzecesmlmc8k8w2z7t3h9aevjvs35x4r5
-     * 필요한 정보 name,symbol 등등
-     * **/
     fun contractQueryTokenInfo(contractAddr: String): APIReturn.TokenInfoResponse? {
         val queryJson = "{\"token_info\":{}}"
         val response = smartContractState(contractAddr, queryJson)

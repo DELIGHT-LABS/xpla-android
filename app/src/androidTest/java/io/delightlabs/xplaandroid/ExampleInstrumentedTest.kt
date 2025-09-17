@@ -80,6 +80,17 @@ class ExampleInstrumentedTest {
     }
 
     @Test
+    fun testQueryDenomTrace() {
+        val denomTraceResponse = lcd.wasmAPI.queryDenomTrace("5BDD47E9E73BF91C14497E254F0A751F1A7D3A6084343F66EA7CEE834A384651")
+        denomTraceResponse?.let {
+            assertEquals(
+                "uausdc",
+                it.denom.base
+            )
+        }
+    }
+
+    @Test
     fun balanceAPI() {
         val response: APIReturn.BalanceReturn? =
             lcd.bankAPI.balance("xpla1wrkl2pz9v6dgzsqt0kzcrx34rgh0f05548kdy9")

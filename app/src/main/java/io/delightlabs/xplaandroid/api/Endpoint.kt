@@ -21,4 +21,7 @@ sealed class Endpoint(val path: String) {
 
     class Broadcast
         : Endpoint("/cosmos/tx/v1beta1/txs")
+
+    class DenomTrace(hash: String)
+        : Endpoint("/ibc/apps/transfer/v1/denoms/$hash")
 }
