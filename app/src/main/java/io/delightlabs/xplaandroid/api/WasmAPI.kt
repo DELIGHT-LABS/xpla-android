@@ -28,5 +28,12 @@ class WasmAPI(val apiRequester: APIRequester) {
             path)
     }
 
+    fun queryDenomTrace(hash: String): APIReturn.DenomTraceResponse? {
+        val path = Endpoint.DenomTrace(hash).path
+        return apiRequester.request<APIReturn.DenomTraceResponse>(
+            HttpMethod.GET,
+            path)
+    }
+
 
 }

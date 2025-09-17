@@ -195,4 +195,20 @@ class APIReturn {
         val totalSupply: String,
     )
 
+    data class DenomTraceResponse(
+        val denom: DenomTrace
+    )
+
+    data class DenomTrace(
+        val base: String,
+        val trace: List<TraceInfo>
+    )
+
+    data class TraceInfo(
+        @SerializedName("port_id")
+        val portId: String,
+        @SerializedName("channel_id")
+        val channelId: String
+    )
+
 }
