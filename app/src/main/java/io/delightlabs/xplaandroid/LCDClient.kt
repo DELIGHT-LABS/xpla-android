@@ -2,7 +2,6 @@ package io.delightlabs.xplaandroid
 
 import WasmGRPC
 import cosmos.base.v1beta1.CoinOuterClass.Coin
-import cosmos.base.v1beta1.coin
 import io.delightlabs.xplaandroid.api.APIRequester
 import io.delightlabs.xplaandroid.api.AuthAPI
 import io.delightlabs.xplaandroid.api.BankAPI
