@@ -55,6 +55,7 @@ object TypeRegistrySingleton {
                 cosmos.authz.v1beta1.Tx.getDescriptor(),
                 cosmwasm.wasm.v1.Tx.getDescriptor(),
                 ethermint.evm.v1.Tx.getDescriptor(),
+                cosmos.evm.vm.v1.Tx.getDescriptor(),
                 ethermint.feemarket.v1.Tx.getDescriptor(),
                 xpla.reward.v1beta1.Tx.getDescriptor(),
                 xpla.volunteer.v1beta1.Tx.getDescriptor(),
